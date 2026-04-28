@@ -18,15 +18,20 @@ drop-ship or customer download.
 
 ## Current Focus
 > Update this section at the start of each session.
-- [ ] Component 3 — first brand template + schema definition
-- [ ] Establish team.json and order.json contracts
-- [ ] TDD setup for pipeline validation
+- [x] Component 2 — Automation pipeline (video + print + packaging complete)
+- [x] Component 3 — Asset generation (brand templates, Hyperframes + Remotion support)
+- [x] Remotion integration Phase 1-3 (architecture, infrastructure, testing, second brand)
+- [ ] Phase 4 — Remotion animation implementation + end-to-end testing
 
 ## Tech Stack Summary
 - **Runtime**: Node.js ESM (`.mjs` or `"type": "module"` in package.json)
 - **Frontend**: Next.js (App Router) + Tailwind CSS
 - **Database**: Appwrite (Cloud for dev, self-hosted VPS for prod)
-- **Video Rendering**: Hyperframes (compositions) + Remotion (complex sequences)
+- **Video Rendering**: Hyperframes (compositions) + Remotion (React JSX)
+  - Hyperframes: HTML/GSAP compositions, selected via `brand.renderEngine: "hyperframes"`
+  - Remotion: React components, selected via `brand.renderEngine: "remotion"`
+  - Engine selection in brand.json determines render path
+  - Supported brands: cinematic-dark (Hyperframes), tech-dynamic (Remotion)
 - **Print Rendering**: Photoshop UXP scripting
 - **AI Image**: ComfyUI (BiRefNet masking, FLUX generation)
 - **Animation**: GSAP inside Hyperframes compositions

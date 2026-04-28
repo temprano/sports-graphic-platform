@@ -249,19 +249,29 @@ Format: `- [x]` done · `- [ ]` pending · `- [~]` in progress · `- [-]` blocke
   - [x] `TeamBanner.jsx` — 1920×1080, 15s @ 30fps
   - Note: Stubs created, full React implementation pending Phase 4
 
-**Phase 4: End-to-End & Documentation** ⏳ IN PROGRESS
-- [ ] **Integration Testing** — Full pipeline with both engines
-  - Queue job with brand.renderEngine: "hyperframes" → renders with Hyperframes
-  - Queue job with brand.renderEngine: "remotion" → renders with Remotion
-  - No breaking changes to existing Hyperframes workflow
+**Phase 4: End-to-End & Documentation** ⏳ PENDING
+- [ ] **Implement Remotion React Compositions** — Full animation logic
+  - [ ] PlayerIntroFull.jsx (1920×1080, 30s, tech animations)
+  - [ ] PlayerIntroShort.jsx (1080×1920, 8s, vertical format)
+  - [ ] TeamBanner.jsx (1920×1080, 15s, roster carousel)
+  - Estimated: ~600 LOC total
+- [ ] **Wire renderWithRemotion()** — Enable actual Remotion rendering
+  - Dynamic import of remotion-client.js
+  - Composition prop mapping (player/team/brand data)
+- [ ] **Implement Photoshop UXP Scripts** — Print rendering
+  - poster-16x20.psjs (16×20 in, 300 DPI, CMYK)
+  - banner-2x6.psjs (2×6 in, 300 DPI, CMYK)
+  - player-card-4x6.psjs (4×6 in, 300 DPI, CMYK)
+  - Estimated: ~450 LOC total
+- [ ] **End-to-End Testing** — Both render engines
+  - Test job with renderEngine: "hyperframes" (cinematic-dark)
+  - Test job with renderEngine: "remotion" (tech-dynamic)
+  - Verify consent gates work with both engines
+  - Test order state transitions with both engines
 - [ ] **Documentation Updates**
-  - Update TODO.md with Remotion completion summary
-  - Update CLAUDE.md with Remotion support section
   - Update CONVENTIONS.md with renderEngine guidance
   - Update ARCHITECTURE.md with render engine dispatch diagram
-- [ ] **Proof Approval Integration** — Verify finals render only after proof approval
-  - canReleaseFinals() check applies to both engines
-  - Consent gates work with both engines
+  - Update STACK.md with Remotion architecture notes
 
 - [ ] **Execute Appwrite Setup**
   - Command: `node scripts/setup-appwrite.js`
