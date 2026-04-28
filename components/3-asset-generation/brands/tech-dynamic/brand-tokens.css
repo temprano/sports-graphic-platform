@@ -1,0 +1,129 @@
+/**
+ * Tech Dynamic Brand Tokens
+ * CSS custom properties for the tech-dynamic brand template
+ * 
+ * Used by Remotion React compositions and print templates
+ * All colors as hex values, no hardcoded values in compositions
+ */
+
+:root {
+  /* ─── Primary Colors ─────────────────────────────────────────────── */
+  --color-primary: #00a8e8;
+  --color-primary-dark: #0088b8;
+  --color-primary-light: #33bfff;
+  --color-primary-alpha-80: rgba(0, 168, 232, 0.8);
+  --color-primary-alpha-50: rgba(0, 168, 232, 0.5);
+
+  /* ─── Secondary Colors ───────────────────────────────────────────── */
+  --color-secondary: #003d82;
+  --color-secondary-dark: #002555;
+  --color-secondary-light: #0055b8;
+  --color-secondary-alpha-80: rgba(0, 61, 130, 0.8);
+  --color-secondary-alpha-50: rgba(0, 61, 130, 0.5);
+
+  /* ─── Accent Colors ──────────────────────────────────────────────── */
+  --color-accent: #00ff88;
+  --color-accent-bright: #00ffaa;
+  --color-accent-dim: #00cc66;
+  --color-accent-alpha-80: rgba(0, 255, 136, 0.8);
+  --color-accent-alpha-50: rgba(0, 255, 136, 0.5);
+
+  /* ─── Background Colors ──────────────────────────────────────────── */
+  --color-background-dark: #0a0e27;
+  --color-background-darker: #050810;
+  --color-background-light: #1a1f3a;
+  --color-background-accent: #1a3a52;
+
+  /* ─── Text Colors ────────────────────────────────────────────────── */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-tertiary: #707070;
+  --color-text-muted: #505050;
+
+  /* ─── Neutral/Grayscale ─────────────────────────────────────────── */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-gray-10: #f5f5f5;
+  --color-gray-20: #e0e0e0;
+  --color-gray-30: #c0c0c0;
+  --color-gray-40: #a0a0a0;
+  --color-gray-50: #808080;
+  --color-gray-60: #606060;
+  --color-gray-70: #404040;
+  --color-gray-80: #202020;
+  --color-gray-90: #101010;
+
+  /* ─── Functional Colors ──────────────────────────────────────────── */
+  --color-success: #00cc66;
+  --color-warning: #ffaa00;
+  --color-error: #ff3333;
+  --color-info: #00a8e8;
+
+  /* ─── Typography ─────────────────────────────────────────────────── */
+  --font-display: "Montserrat", sans-serif;
+  --font-body: "Inter", sans-serif;
+  
+  --font-size-h1: 72px;
+  --font-size-h2: 56px;
+  --font-size-h3: 48px;
+  --font-size-h4: 36px;
+  --font-size-h5: 28px;
+  --font-size-h6: 20px;
+  --font-size-body-xl: 18px;
+  --font-size-body-lg: 16px;
+  --font-size-body-md: 14px;
+  --font-size-body-sm: 12px;
+  --font-size-body-xs: 11px;
+
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --line-height-tight: 1.1;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ─── Spacing ────────────────────────────────────────────────────── */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+  --spacing-4xl: 80px;
+
+  /* ─── Border Radius ──────────────────────────────────────────────── */
+  --radius-none: 0px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* ─── Shadows ────────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-glow-primary: 0 0 20px rgba(0, 168, 232, 0.3);
+  --shadow-glow-accent: 0 0 20px rgba(0, 255, 136, 0.3);
+
+  /* ─── Transitions ────────────────────────────────────────────────── */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+
+  /* ─── Z-Index Scale ──────────────────────────────────────────────── */
+  --z-index-background: 0;
+  --z-index-content: 10;
+  --z-index-floating: 20;
+  --z-index-modal: 30;
+  --z-index-tooltip: 40;
+  --z-index-notification: 50;
+}

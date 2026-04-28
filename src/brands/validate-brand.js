@@ -23,7 +23,8 @@
 export function validateBrand(brandJson, brandFolderPath) {
   const errors = [];
 
-  // TODO: validate required top-level fields (id, name, active, tokenSchema)
+  // TODO: validate required top-level fields (id, name, active, renderEngine, tokenSchema)
+  // TODO: validate renderEngine is one of ["hyperframes", "remotion"]
   // TODO: validate tokenSchema has all required color keys (primary, accent, text, background)
   // TODO: validate tokenSchema has required font keys (heading, body)
   // TODO: validate compositions entries have required fields (file, duration, width, height, fps)
@@ -31,6 +32,7 @@ export function validateBrand(brandJson, brandFolderPath) {
   // TODO: check composition file paths exist on disk (relative to brandFolderPath)
   // TODO: check print script file paths exist on disk
   // TODO: validate outputSpecs dimensions are positive integers
+  
 
   return {
     valid: errors.length === 0,

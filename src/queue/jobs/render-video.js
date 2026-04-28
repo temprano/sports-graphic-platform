@@ -70,9 +70,17 @@ export async function run(data) {
     throw new Error(`Failed to load brand.json: ${error.message}`);
   }
 
-  // ─── Check Hyperframes Availability ────────────────────────────────
+  // ─── Validate Render Engine ────────────────────────────────────────
+  const renderEngine = brandData.renderEngine || 'hyperframes';
+  if (!['hyperframes', 'remotion'].includes(renderEngine)) {
+    throw new Error(`Invalid renderEngine: ${renderEngine}. Must be 'hyperframes' or 'remotion'`);
+  }
+
+  // ─── Check Service Availability ────────────────────────────────────
+  // For now, both engines require Hyperframes to be available for video rendering
+  // TODO: Add Remotion service availability check when remotion-client.js is implemented
   const hyperframesReady = await isReachable();
-  if (!hyperframesReady) {
+  if (!hyperframesReady && renderEngine === 'hyperframes') {
     logger.warn('Hyperframes not reachable — cannot render videos', { orderId });
     throw new Error('Hyperframes service not available');
   }
@@ -169,19 +177,26 @@ export async function run(data) {
           },
         };
 
-        // Render composition
+        // Render composition using appropriate engine
         const outputFileName = `${playerRenderId}.mp4`;
         const outputPath = `${outputDir}/${outputFileName}`;
 
-        const renderResult = await renderComposition({
-          html: htmlTemplate,
-          data: templateData,
-          width: compositionDef.width,
-          height: compositionDef.height,
-          fps: compositionDef.fps || 30,
-          duration: compositionDef.duration,
-          outputPath,
-        });
+        // Route to appropriate render engine
+        let renderResult;
+        if (renderEngine === 'remotion') {
+          renderResult = await renderWithRemotion(
+            { html: htmlTemplate, data: templateData },
+            compositionDef,
+            outputPath
+          );
+        } else {
+          // Default to Hyperframes
+          renderResult = await renderWithHyperframes(
+            { html: htmlTemplate, data: templateData },
+            compositionDef,
+            outputPath
+          );
+        }
 
         renderedCount++;
         videos.push({
@@ -238,4 +253,36 @@ export async function run(data) {
     failedCount,
     videos,
   };
+}
+
+/**
+ * Render with Hyperframes engine (HTML-based compositions)
+ * @internal
+ */
+async function renderWithHyperframes(templateData, compositionDef, outputPath) {
+  const result = await renderComposition({
+    html: templateData.html,
+    data: templateData.data,
+    width: compositionDef.width,
+    height: compositionDef.height,
+    fps: compositionDef.fps || 30,
+    duration: compositionDef.duration,
+    outputPath,
+  });
+
+  return result;
+}
+
+/**
+ * Render with Remotion engine (React JSX compositions)
+ * @internal
+ * @throws {Error} when remotion-client.js is not yet implemented
+ */
+async function renderWithRemotion(templateData, compositionDef, outputPath) {
+  // TODO: Import remotion-client when ready
+  // const { renderComposition: renderRemotionComposition } = await import('../../pipeline/remotion-client.js');
+  // return renderRemotionComposition({ ... });
+  
+  // For now, throw a descriptive error
+  throw new Error('Remotion rendering not yet implemented. Coming in Phase 3.');
 }

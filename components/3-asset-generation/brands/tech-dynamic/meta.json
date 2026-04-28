@@ -1,0 +1,38 @@
+{
+  "id": "tech-dynamic",
+  "name": "Tech Dynamic",
+  "version": "1.0.0",
+  "created": "2026-04-28",
+  "description": "Modern tech-forward brand with vibrant cyan and green accents on dark background. Uses Remotion React compositions for advanced animation capabilities.",
+  "author": "Sports Graphics Platform",
+  "tags": ["tech", "modern", "react", "remotion", "dark-mode", "vibrant"],
+  "renderEngine": "remotion",
+  "compositions": {
+    "player-intro-full": {
+      "duration": 30,
+      "dimensions": "1920x1080",
+      "fps": 30,
+      "type": "intro"
+    },
+    "player-intro-short": {
+      "duration": 8,
+      "dimensions": "1080x1920",
+      "fps": 30,
+      "type": "intro"
+    },
+    "team-banner": {
+      "duration": 15,
+      "dimensions": "1920x1080",
+      "fps": 30,
+      "type": "banner"
+    }
+  },
+  "printFormats": ["poster-16x20", "banner-2x6", "player-card-4x6"],
+  "colors": {
+    "primary": "#00a8e8",
+    "secondary": "#003d82",
+    "accent": "#00ff88",
+    "background": "#0a0e27",
+    "text": "#ffffff"
+  }
+}

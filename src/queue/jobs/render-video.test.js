@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('fs');
 vi.mock('../../pipeline/hyperframes-client.js');
+vi.mock('../../pipeline/remotion-client.js');
 vi.mock('../../pipeline/consent/check-consent.js');
 vi.mock('../../lib/logger.js');
 
 import { run } from './render-video.js';
 import * as fs from 'fs';
 import * as hyperframes from '../../pipeline/hyperframes-client.js';
+import * as remotion from '../../pipeline/remotion-client.js';
 import * as consent from '../../pipeline/consent/check-consent.js';
 
 describe('render-video job', () => {
@@ -226,5 +228,181 @@ describe('render-video job', () => {
 
     expect(result.renderedCount).toBe(0);
     expect(result.videos).toHaveLength(0);
+  });
+
+  // ─── New Phase 3 Tests: renderEngine Routing ───────────────────────
+
+  it('should reject invalid renderEngine', async () => {
+    const team = {
+      schemaVersion: '1.0',
+      orderId: 'ord_001',
+      team: 'Hawks',
+      sport: 'basketball',
+      colors: {},
+      fonts: {},
+      logo: {},
+      players: [{ id: 'p1', slug: 'jordan', name: 'Jordan', firstName: 'Jordan', lastName: 'Smith', number: '12', position: 'PG', photo: { cutout: './test.png', focalPoint: { x: 0.5, y: 0.5 } }, stats: {}, consentLog: {} }],
+      deliverables: [{ type: 'video', format: 'player-intro-full' }],
+    };
+
+    const brand = {
+      schemaVersion: '1.0',
+      id: 'cinematic-dark',
+      renderEngine: 'invalid-engine',
+      compositions: { 'player-intro-full': { file: 'comp.html', duration: 30, width: 1920, height: 1080, fps: 30 } },
+    };
+
+    fs.readFileSync
+      .mockReturnValueOnce(JSON.stringify(team))
+      .mockReturnValueOnce(JSON.stringify(brand));
+
+    hyperframes.isReachable.mockResolvedValue(true);
+
+    await expect(
+      run({
+        orderId: 'ord_001',
+        teamJsonPath: '/tmp/team.json',
+        brandJsonPath: '/tmp/brand.json',
+        compositionsPath: '/brand/compositions',
+        outputDir: '/output',
+      })
+    ).rejects.toThrow("Invalid renderEngine: invalid-engine. Must be 'hyperframes' or 'remotion'");
+  });
+
+  it('should default to hyperframes when renderEngine not specified', async () => {
+    const team = {
+      schemaVersion: '1.0',
+      orderId: 'ord_001',
+      team: 'Hawks',
+      sport: 'basketball',
+      colors: {},
+      fonts: {},
+      logo: {},
+      players: [{ id: 'p1', slug: 'jordan', name: 'Jordan', firstName: 'Jordan', lastName: 'Smith', number: '12', position: 'PG', photo: { cutout: './test.png', focalPoint: { x: 0.5, y: 0.5 } }, stats: {}, consentLog: { aiMotion: true } }],
+      deliverables: [{ type: 'video', format: 'player-intro-full' }],
+    };
+
+    const brand = {
+      schemaVersion: '1.0',
+      id: 'cinematic-dark',
+      // renderEngine not specified — should default to 'hyperframes'
+      compositions: { 'player-intro-full': { file: 'comp.html', duration: 30, width: 1920, height: 1080, fps: 30 } },
+    };
+
+    fs.readFileSync
+      .mockReturnValueOnce(JSON.stringify(team))
+      .mockReturnValueOnce(JSON.stringify(brand))
+      .mockReturnValueOnce('<html>template</html>');
+
+    hyperframes.isReachable.mockResolvedValue(true);
+    hyperframes.renderComposition.mockResolvedValue({
+      outputPath: '/output/test.mp4',
+      width: 1920,
+      height: 1080,
+      duration: 30,
+      fileSize: 1500000,
+    });
+
+    const result = await run({
+      orderId: 'ord_001',
+      teamJsonPath: '/tmp/team.json',
+      brandJsonPath: '/tmp/brand.json',
+      compositionsPath: '/brand/compositions',
+      outputDir: '/output',
+    });
+
+    expect(result.renderedCount).toBe(1);
+    expect(hyperframes.renderComposition).toHaveBeenCalled();
+  });
+
+  it('should route to Remotion when renderEngine is remotion', async () => {
+    const team = {
+      schemaVersion: '1.0',
+      orderId: 'ord_001',
+      team: 'Hawks',
+      sport: 'basketball',
+      colors: {},
+      fonts: {},
+      logo: {},
+      players: [{ id: 'p1', slug: 'jordan', name: 'Jordan', firstName: 'Jordan', lastName: 'Smith', number: '12', position: 'PG', photo: { cutout: './test.png', focalPoint: { x: 0.5, y: 0.5 } }, stats: {}, consentLog: { aiMotion: true } }],
+      deliverables: [{ type: 'video', format: 'player-intro-full' }],
+    };
+
+    const brand = {
+      schemaVersion: '1.0',
+      id: 'tech-dynamic',
+      renderEngine: 'remotion',
+      compositions: { 'player-intro-full': { compositionId: 'player-intro-full', duration: 30, width: 1920, height: 1080, fps: 30 } },
+    };
+
+    fs.readFileSync
+      .mockReturnValueOnce(JSON.stringify(team))
+      .mockReturnValueOnce(JSON.stringify(brand))
+      .mockReturnValueOnce('<html>template</html>');
+
+    hyperframes.isReachable.mockResolvedValue(true);
+    // Mock renderWithRemotion to throw "not implemented" (Phase 3 TODO)
+    // In real Phase 4, this would call remotion.renderComposition
+    
+    const result = await run({
+      orderId: 'ord_001',
+      teamJsonPath: '/tmp/team.json',
+      brandJsonPath: '/tmp/brand.json',
+      compositionsPath: '/brand/compositions',
+      outputDir: '/output',
+    });
+
+    // Current implementation throws "not implemented" for Remotion, so it fails
+    // This validates the routing decision was made (engine dispatch attempted)
+    expect(result.failedCount).toBe(1);
+    expect(result.videos[0].status).toBe('failed');
+    expect(result.videos[0].error).toContain('not yet implemented');
+  });
+
+  it('should render with useAiMotion flag set based on consent', async () => {
+    const team = {
+      schemaVersion: '1.0',
+      orderId: 'ord_001',
+      team: 'Hawks',
+      sport: 'basketball',
+      colors: {},
+      fonts: {},
+      logo: {},
+      players: [{ id: 'p1', slug: 'jordan', name: 'Jordan', firstName: 'Jordan', lastName: 'Smith', number: '12', position: 'PG', photo: { cutout: './test.png', focalPoint: { x: 0.5, y: 0.5 } }, stats: {}, consentLog: { aiMotion: false } }],
+      deliverables: [{ type: 'video', format: 'player-intro-full' }],
+    };
+
+    const brand = {
+      schemaVersion: '1.0',
+      id: 'cinematic-dark',
+      renderEngine: 'hyperframes',
+      compositions: { 'player-intro-full': { file: 'comp.html', duration: 30, width: 1920, height: 1080, fps: 30 } },
+    };
+
+    fs.readFileSync
+      .mockReturnValueOnce(JSON.stringify(team))
+      .mockReturnValueOnce(JSON.stringify(brand))
+      .mockReturnValueOnce('<html>template</html>');
+
+    hyperframes.isReachable.mockResolvedValue(true);
+    hyperframes.renderComposition.mockResolvedValue({
+      outputPath: '/output/test.mp4',
+      width: 1920,
+      height: 1080,
+      duration: 30,
+      fileSize: 1500000,
+    });
+
+    const result = await run({
+      orderId: 'ord_001',
+      teamJsonPath: '/tmp/team.json',
+      brandJsonPath: '/tmp/brand.json',
+      compositionsPath: '/brand/compositions',
+      outputDir: '/output',
+    });
+
+    // Should render (not skip), but with useAiMotion: false because consent is false
+    expect(result.renderedCount).toBe(1);
+    expect(result.videos[0].aiMotionApplied).toBe(false);
   });
 });

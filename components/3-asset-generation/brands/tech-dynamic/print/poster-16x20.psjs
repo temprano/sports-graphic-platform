@@ -1,0 +1,12 @@
+/**
+ * Tech Dynamic Brand — Poster 16x20 Print Template
+ * Photoshop UXP script for poster rendering
+ * 
+ * Output: 16x20 inches, 300 DPI, CMYK, PDF
+ * Compatible with Prodigi print-on-demand service
+ */
+
+// TODO: Implement full Photoshop UXP composition
+// This is a placeholder for Phase 4 implementation
+
+console.log('Tech Dynamic Poster 16x20 template loaded');

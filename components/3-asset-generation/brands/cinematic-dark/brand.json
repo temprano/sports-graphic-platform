@@ -1,6 +1,7 @@
 {
   "schemaVersion": "1.0",
   "id": "cinematic-dark",
+  "renderEngine": "hyperframes",
   "name": "Cinematic Dark",
   "description": "Bold, dramatic. High contrast with dynamic player entrances.",
   "active": false,

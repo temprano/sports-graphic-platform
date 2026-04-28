@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "id": "tech-dynamic",
+  "name": "Tech Dynamic",
+  "active": true,
+  "renderEngine": "remotion",
+  "tokenSchema": {
+    "colors": ["primary", "secondary", "accent", "background", "text"],
+    "fonts": ["displayFont", "bodyFont"]
+  },
+  "compositions": {
+    "player-intro-full": {
+      "compositionId": "PlayerIntroFull",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "duration": 30,
+      "description": "30-second full HD player introduction with tech animations"
+    },
+    "player-intro-short": {
+      "compositionId": "PlayerIntroShort",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "duration": 8,
+      "description": "8-second vertical player introduction for social media"
+    },
+    "team-banner": {
+      "compositionId": "TeamBanner",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "duration": 15,
+      "description": "15-second team roster banner with tech elements"
+    }
+  },
+  "print": {
+    "poster-16x20": {
+      "script": "poster-16x20.psjs",
+      "width": 16,
+      "height": 20,
+      "unit": "inches",
+      "dpi": 300,
+      "colorSpace": "CMYK",
+      "description": "16x20 inch poster with team photo and stats"
+    },
+    "banner-2x6": {
+      "script": "banner-2x6.psjs",
+      "width": 2,
+      "height": 6,
+      "unit": "inches",
+      "dpi": 300,
+      "colorSpace": "CMYK",
+      "description": "2x6 inch team banner for fundraising"
+    },
+    "player-card-4x6": {
+      "script": "player-card-4x6.psjs",
+      "width": 4,
+      "height": 6,
+      "unit": "inches",
+      "dpi": 300,
+      "colorSpace": "CMYK",
+      "description": "4x6 inch player trading card with tech border"
+    }
+  },
+  "outputSpecs": {
+    "video": {
+      "codec": "h264",
+      "bitrate": "8000k",
+      "format": "mp4"
+    },
+    "print": {
+      "format": "pdf",
+      "colorSpace": "CMYK",
+      "minDpi": 300
+    }
+  }
+}
