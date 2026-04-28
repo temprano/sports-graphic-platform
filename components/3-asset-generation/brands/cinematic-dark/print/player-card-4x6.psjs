@@ -1,0 +1,97 @@
+/**
+ * cinematic-dark — Player Card 4x6
+ * Photoshop UXP Script
+ *
+ * Output: 1200x1800px, 300dpi, CMYK PDF
+ *
+ * Compact trading-card style player profile.
+ * Used for parent store individual purchase and team sets.
+ */
+
+'use strict';
+
+const { app, core, constants } = require('photoshop');
+const { storage } = require('uxp');
+
+const p = typeof __playerData !== 'undefined' ? __playerData : null;
+const tokens = typeof __brandTokens !== 'undefined' ? __brandTokens : {};
+const outputPath = typeof __outputPath !== 'undefined' ? __outputPath : null;
+
+if (!p) throw new Error('player-card-4x6.psjs: __playerData not injected');
+if (!outputPath) throw new Error('player-card-4x6.psjs: __outputPath not injected');
+
+const DOC_WIDTH_PX  = 1200;  // 4" @ 300dpi
+const DOC_HEIGHT_PX = 1800;  // 6" @ 300dpi
+const DOC_DPI       = 300;
+
+const COLORS = {
+  primary:    tokens.primary    || '#1a1a2e',
+  accent:     tokens.accent     || '#e94560',
+  text:       tokens.text       || '#ffffff',
+  background: tokens.background || '#0f0f23',
+};
+
+const FONTS = {
+  heading: tokens.fontHeading || 'Bebas Neue',
+  body:    tokens.fontBody    || 'Inter',
+};
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? { red: parseInt(result[1], 16), green: parseInt(result[2], 16), blue: parseInt(result[3], 16) }
+    : { red: 255, green: 255, blue: 255 };
+}
+
+async function buildPlayerCard() {
+  await core.executeAsModal(async () => {
+
+    const doc = await app.documents.add({
+      width:      DOC_WIDTH_PX,
+      height:     DOC_HEIGHT_PX,
+      resolution: DOC_DPI,
+      mode:       constants.ColorMode.CMYK,
+      fill:       constants.DocumentFill.TRANSPARENT,
+      name:       `card_${p.slug || p.lastName}`,
+    });
+
+    // Background
+    const bgLayer = await doc.layers.add();
+    bgLayer.name = 'Background';
+    await bgLayer.fill(hexToRgb(COLORS.background));
+
+    // Player photo (top 60% of card)
+    if (p.photo?.cutout) {
+      const photoLayer = await doc.layers.add();
+      photoLayer.name = 'Player Photo';
+      // TODO: place and scale cutout photo
+    }
+
+    // Accent bar horizontal rule
+    // TODO: solid rect in COLORS.accent at 60% height mark
+
+    // Player name block (bottom 40%)
+    // TODO: last name large in FONTS.heading COLORS.accent
+    // TODO: first name smaller in FONTS.heading COLORS.text
+    // TODO: number + position in FONTS.body
+
+    // Team logo small, top corner
+    if (p.logo) {
+      // TODO: place logo
+    }
+
+    const fs = await storage.localFileSystem.getFileForSaving(outputPath, { types: ['pdf'] });
+    await doc.exportFile(fs, constants.ExportFormat.PDF, {
+      encoding: constants.PDFEncoding.ZIP,
+      colorProfile: 'U.S. Web Coated (SWOP) v2',
+    });
+
+    await doc.closeWithoutSaving();
+
+  }, { commandName: 'Build Player Card 4x6' });
+}
+
+buildPlayerCard().catch(err => {
+  console.error('player-card-4x6.psjs failed:', err);
+  throw err;
+});

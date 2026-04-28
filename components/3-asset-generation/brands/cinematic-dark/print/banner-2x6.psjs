@@ -1,0 +1,243 @@
+/**
+ * cinematic-dark — Banner 2x6
+ * Photoshop UXP Script
+ *
+ * Output: 2400x7200px, 150dpi, CMYK PDF
+ *
+ * Vertical pull-up / retractable banner format.
+ * Designed for sideline display, gym entrance, or event backdrop.
+ *
+ * Called by Component 2 automation pipeline.
+ * Receives player data via globals injected before execution.
+ *
+ * Usage (from pipeline):
+ *   await photoshop.runScript('./brands/cinematic-dark/print/banner-2x6.psjs', {
+ *     playerData,
+ *     brandTokens,
+ *     outputPath
+ *   });
+ */
+
+'use strict';
+
+const { app, core, action, constants } = require('photoshop');
+const { storage } = require('uxp');
+
+// ─── Injected by pipeline ───────────────────────────────────────
+const p = typeof __playerData !== 'undefined' ? __playerData : null;
+const tokens = typeof __brandTokens !== 'undefined' ? __brandTokens : {};
+const outputPath = typeof __outputPath !== 'undefined' ? __outputPath : null;
+
+if (!p) throw new Error('banner-2x6.psjs: __playerData not injected');
+if (!outputPath) throw new Error('banner-2x6.psjs: __outputPath not injected');
+
+// ─── Document spec ──────────────────────────────────────────────
+const DOC_WIDTH_PX  = 2400;  // 2" @ 150dpi (24" physical = 3600px, scaled for web proof)
+const DOC_HEIGHT_PX = 7200;  // 6" @ 150dpi (72" physical)
+const DOC_DPI       = 150;
+const BLEED_PX      = 19;    // 0.125" bleed @ 150dpi
+
+// ─── Safe zone bounds (inside bleed) ───────────────────────────
+const SAFE = {
+  top:    BLEED_PX + 38,   // extra top margin for hardware clamp area
+  bottom: BLEED_PX,
+  left:   BLEED_PX,
+  right:  BLEED_PX,
+};
+
+// ─── Brand token defaults ───────────────────────────────────────
+const COLORS = {
+  primary:    tokens.primary    || '#1a1a2e',
+  accent:     tokens.accent     || '#e94560',
+  text:       tokens.text       || '#ffffff',
+  background: tokens.background || '#0f0f23',
+};
+
+const FONTS = {
+  heading: tokens.fontHeading || 'Bebas Neue',
+  body:    tokens.fontBody    || 'Inter',
+};
+
+// ─── Helpers ────────────────────────────────────────────────────
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        red:   parseInt(result[1], 16),
+        green: parseInt(result[2], 16),
+        blue:  parseInt(result[3], 16),
+      }
+    : { red: 255, green: 255, blue: 255 };
+}
+
+// ─── Layout constants ────────────────────────────────────────────
+//
+// Banner is portrait 2:6 — extreme vertical format.
+// Zone breakdown (top to bottom):
+//
+//   0–120px      Top bleed + hardware clamp safe zone
+//   120–600px    Logo + team name header zone       (480px)
+//   600–4800px   Player photo zone                  (4200px, ~58% of height)
+//   4800–5100px  Accent band                        (300px)
+//   5100–6900px  Name / number / position block     (1800px)
+//   6900–7080px  Stats row                          (180px)
+//   7080–7200px  Bottom bleed
+//
+const ZONES = {
+  header:    { top: 120,  height: 480  },
+  photo:     { top: 600,  height: 4200 },
+  accentBar: { top: 4800, height: 300  },
+  nameBlock: { top: 5100, height: 1800 },
+  statsRow:  { top: 6900, height: 180  },
+};
+
+// ─── Main ───────────────────────────────────────────────────────
+async function buildBanner() {
+  await core.executeAsModal(async () => {
+
+    // 1. Create document
+    const doc = await app.documents.add({
+      width:      DOC_WIDTH_PX,
+      height:     DOC_HEIGHT_PX,
+      resolution: DOC_DPI,
+      mode:       constants.ColorMode.CMYK,
+      fill:       constants.DocumentFill.TRANSPARENT,
+      name:       `banner_2x6_${p.slug || p.lastName}`,
+    });
+
+    // 2. Background fill
+    const bgLayer = await doc.layers.add();
+    bgLayer.name = 'Background';
+    await bgLayer.fill(hexToRgb(COLORS.background));
+
+    // 3. Subtle gradient overlay — primary color fading from top
+    const gradLayer = await doc.layers.add();
+    gradLayer.name = 'Background Gradient';
+    // TODO: Linear gradient descriptor from COLORS.primary (top, 80% opacity)
+    //       to transparent at 50% height. Apply as layer fill effect.
+
+    // 4. Diagonal accent lines (brand texture)
+    const linesLayer = await doc.layers.add();
+    linesLayer.name = 'Accent Lines';
+    // TODO: Draw 3–4 diagonal lines using COLORS.accent at 8% opacity
+    //       Angle: 15deg, spacing: 400px, spanning full document height.
+
+    // 5. Header zone — team logo + name
+    if (p.logo) {
+      const logoLayer = await doc.layers.add();
+      logoLayer.name = 'Team Logo';
+      // TODO: Place logo file, scale to fit within header zone centered.
+      //       Max dimensions: 280x280px centered in 2400px width.
+    }
+
+    const teamNameLayer = await doc.layers.add();
+    teamNameLayer.name = 'Team Name';
+    // TODO: Text layer
+    //   Content:  p.team.toUpperCase()
+    //   Font:     FONTS.heading
+    //   Size:     160pt
+    //   Color:    COLORS.text
+    //   Position: Center aligned, below logo in header zone
+    //   Tracking: 200
+
+    // 6. Player photo zone
+    if (p.photo?.cutout) {
+      const photoLayer = await doc.layers.add();
+      photoLayer.name = 'Player Photo';
+      // TODO: Place cutout PNG.
+      //   Scale to fill ZONES.photo width (2400px) maintaining aspect ratio.
+      //   Anchor to bottom of photo zone.
+      //   Apply focalPoint from p.photo.focalPoint for horizontal positioning.
+      //   focalPoint.x drives horizontal offset: (focalPoint.x - 0.5) * photoWidth
+    }
+
+    // Photo-to-accent fade
+    const fadeMaskLayer = await doc.layers.add();
+    fadeMaskLayer.name = 'Photo Fade Mask';
+    // TODO: Gradient from transparent (top of photo zone) to COLORS.background
+    //       over bottom 800px of photo zone. Smooth transition into accent band.
+
+    // 7. Accent band
+    const accentBandLayer = await doc.layers.add();
+    accentBandLayer.name = 'Accent Band';
+    // TODO: Solid rectangle, full width, ZONES.accentBar height.
+    //   Fill: COLORS.accent
+    //   Position: x=0, y=ZONES.accentBar.top
+
+    // Player number — large, right-aligned inside accent band
+    const accentNumberLayer = await doc.layers.add();
+    accentNumberLayer.name = 'Number on Accent';
+    // TODO: Text layer
+    //   Content:  `#${p.number}`
+    //   Font:     FONTS.heading
+    //   Size:     260pt
+    //   Color:    COLORS.background (dark on accent band)
+    //   Position: Right-aligned with SAFE.right padding
+    //   Baseline: Center of accent band vertically
+
+    // 8. Name block
+    const firstNameLayer = await doc.layers.add();
+    firstNameLayer.name = 'First Name';
+    // TODO: Text layer
+    //   Content:  p.firstName.toUpperCase()
+    //   Font:     FONTS.heading
+    //   Size:     200pt
+    //   Color:    COLORS.text
+    //   Position: Center aligned, top of name block
+    //   Tracking: 100
+
+    const lastNameLayer = await doc.layers.add();
+    lastNameLayer.name = 'Last Name';
+    // TODO: Text layer
+    //   Content:  p.lastName.toUpperCase()
+    //   Font:     FONTS.heading
+    //   Size:     300pt
+    //   Color:    COLORS.accent
+    //   Position: Center aligned, below first name
+    //   Tracking: 80
+
+    const positionLayer = await doc.layers.add();
+    positionLayer.name = 'Position';
+    // TODO: Text layer
+    //   Content:  p.position.toUpperCase()
+    //   Font:     FONTS.body
+    //   Size:     80pt
+    //   Color:    COLORS.text
+    //   Opacity:  70%
+    //   Tracking: 400
+    //   Position: Center aligned, below last name with 60px gap
+
+    // 9. Stats row (optional — show if stats exist)
+    const statsEntries = Object.entries(p.stats || {}).slice(0, 3);
+    if (statsEntries.length > 0) {
+      const statsLayer = await doc.layers.add();
+      statsLayer.name = 'Stats';
+      // TODO: For each stat, place two text layers (value + label) side by side.
+      //   Distribute evenly across DOC_WIDTH_PX within SAFE margins.
+      //   Value: FONTS.heading, 100pt, COLORS.text
+      //   Label: FONTS.body, 48pt, COLORS.accent, tracking 300
+    }
+
+    // 10. Bleed guides (non-printing)
+    // TODO: Add guides at BLEED_PX from each edge using app.activeDocument.guides
+
+    // 11. Flatten visible and export press-ready PDF
+    const fs = await storage.localFileSystem.getFileForSaving(outputPath, {
+      types: ['pdf'],
+    });
+
+    await doc.exportFile(fs, constants.ExportFormat.PDF, {
+      encoding:     constants.PDFEncoding.ZIP,
+      colorProfile: 'U.S. Web Coated (SWOP) v2',
+      preserveEditing: false,
+    });
+
+    await doc.closeWithoutSaving();
+
+  }, { commandName: 'Build Banner 2x6' });
+}
+
+buildBanner().catch(err => {
+  console.error('banner-2x6.psjs failed:', err);
+  throw err;
+});

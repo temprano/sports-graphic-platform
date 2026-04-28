@@ -1,0 +1,16 @@
+{
+  "id": "evt_test_deposit_001",
+  "type": "payment_intent.succeeded",
+  "data": {
+    "object": {
+      "id": "pi_test_deposit_001",
+      "amount": 12500,
+      "currency": "usd",
+      "status": "succeeded",
+      "metadata": {
+        "orderId": "ord_test_001",
+        "paymentStage": "deposit"
+      }
+    }
+  }
+}

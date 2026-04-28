@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0",
+  "id": "cinematic-dark",
+  "name": "Cinematic Dark",
+  "description": "Bold, dramatic. High contrast with dynamic player entrances.",
+  "active": false,
+  "sports": ["basketball", "football", "soccer", "baseball", "volleyball", "lacrosse"],
+
+  "tokenSchema": {
+    "colors": {
+      "primary":    { "label": "Primary Background", "default": "#1a1a2e" },
+      "accent":     { "label": "Accent / Highlight",  "default": "#e94560" },
+      "text":       { "label": "Text Color",           "default": "#ffffff" },
+      "background": { "label": "Deep Background",      "default": "#0f0f23" }
+    },
+    "fonts": {
+      "heading": { "label": "Player Name Font", "default": "Bebas Neue", "googleFont": true },
+      "body":    { "label": "Stats / Info Font", "default": "Inter",      "googleFont": true }
+    },
+    "logo": {
+      "required": true,
+      "formats": ["png", "svg"],
+      "transparentBackground": true
+    }
+  },
+
+  "compositions": {
+    "player-intro-full": {
+      "file": "compositions/player-intro-full.html",
+      "duration": 30,
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "format": "mp4"
+    },
+    "player-intro-short": {
+      "file": "compositions/player-intro-short.html",
+      "duration": 8,
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "format": "mp4"
+    },
+    "team-banner": {
+      "file": "compositions/team-banner.html",
+      "duration": 15,
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "format": "mp4"
+    }
+  },
+
+  "print": {
+    "poster-16x20": {
+      "file": "print/poster-16x20.psjs",
+      "width": 4800,
+      "height": 6000,
+      "dpi": 300,
+      "format": "PDF",
+      "colorSpace": "CMYK"
+    },
+    "banner-2x6": {
+      "file": "print/banner-2x6.psjs",
+      "width": 2400,
+      "height": 7200,
+      "dpi": 150,
+      "format": "PDF",
+      "colorSpace": "CMYK"
+    },
+    "player-card-4x6": {
+      "file": "print/player-card-4x6.psjs",
+      "width": 1200,
+      "height": 1800,
+      "dpi": 300,
+      "format": "PDF",
+      "colorSpace": "CMYK"
+    }
+  },
+
+  "preview": {
+    "thumbnail": "preview/thumbnail.jpg",
+    "demo": "preview/demo.mp4"
+  }
+}

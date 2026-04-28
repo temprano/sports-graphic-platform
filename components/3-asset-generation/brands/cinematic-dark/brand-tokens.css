@@ -1,0 +1,68 @@
+/*
+ * cinematic-dark — Brand Tokens
+ *
+ * These are the DEFAULT values. In production the pipeline injects
+ * team-specific values from team.json before rendering.
+ *
+ * RULE: No hardcoded hex values anywhere in compositions or print scripts.
+ * Every visual value a customer can change lives here as a custom property.
+ */
+
+:root {
+  /* ── Core Brand Colors ─────────────────────────────────────────────── */
+  --brand-color-primary:    #1a1a2e;   /* dominant background */
+  --brand-color-accent:     #e94560;   /* highlights, borders, emphasis */
+  --brand-color-text:       #ffffff;   /* primary text */
+  --brand-color-background: #0f0f23;   /* deepest background layer */
+
+  /* ── Derived Colors (computed — do not override in team injection) ── */
+  --brand-color-primary-80:    color-mix(in srgb, var(--brand-color-primary) 80%, transparent);
+  --brand-color-primary-40:    color-mix(in srgb, var(--brand-color-primary) 40%, transparent);
+  --brand-color-accent-60:     color-mix(in srgb, var(--brand-color-accent) 60%, transparent);
+  --brand-color-accent-20:     color-mix(in srgb, var(--brand-color-accent) 20%, transparent);
+  --brand-color-text-60:       color-mix(in srgb, var(--brand-color-text) 60%, transparent);
+
+  /* ── Gradients ─────────────────────────────────────────────────────── */
+  --brand-gradient-hero:    linear-gradient(135deg, var(--brand-color-primary), var(--brand-color-background));
+  --brand-gradient-vignette: radial-gradient(ellipse at center, transparent 40%, var(--brand-color-background) 100%);
+  --brand-gradient-name:    linear-gradient(90deg, var(--brand-color-accent), var(--brand-color-text));
+
+  /* ── Glow / Shadow ─────────────────────────────────────────────────── */
+  --brand-glow-accent:      0 0 40px var(--brand-color-accent-60);
+  --brand-glow-player:      0 20px 80px var(--brand-color-accent-20);
+  --brand-shadow-text:      2px 2px 8px rgba(0, 0, 0, 0.8);
+
+  /* ── Typography ────────────────────────────────────────────────────── */
+  --brand-font-heading:     'Bebas Neue', 'Impact', sans-serif;
+  --brand-font-body:        'Inter', 'Helvetica Neue', sans-serif;
+
+  /* ── Type Scale (1920x1080 base) ───────────────────────────────────── */
+  --type-display:           clamp(80px, 8vw, 140px);    /* player name */
+  --type-headline:          clamp(40px, 4vw, 72px);     /* number, position */
+  --type-body:              clamp(20px, 2vw, 32px);     /* stats, details */
+  --type-caption:           clamp(14px, 1.5vw, 22px);  /* fine print */
+
+  /* ── Spacing ───────────────────────────────────────────────────────── */
+  --space-xs:   8px;
+  --space-sm:   16px;
+  --space-md:   32px;
+  --space-lg:   64px;
+  --space-xl:   128px;
+
+  /* ── Safe Zones ────────────────────────────────────────────────────── */
+  --safe-top:    10%;
+  --safe-bottom: 10%;
+  --safe-left:   7%;
+  --safe-right:  7%;
+
+  /* ── Player Photo ──────────────────────────────────────────────────── */
+  --focal-x: 0.5;   /* overridden per player by pipeline */
+  --focal-y: 0.3;   /* overridden per player by pipeline */
+
+  /* ── Animation Timing ──────────────────────────────────────────────── */
+  --duration-instant:   0.15s;
+  --duration-fast:      0.3s;
+  --duration-normal:    0.6s;
+  --duration-slow:      1.0s;
+  --duration-cinematic: 1.8s;
+}

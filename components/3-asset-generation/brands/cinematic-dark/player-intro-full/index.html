@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+
+      :root {
+        --brand-color-primary:    #1a1a2e;
+        --brand-color-accent:     #e94560;
+        --brand-color-text:       #ffffff;
+        --brand-color-background: #0f0f23;
+        --brand-font-heading:     'Bebas Neue', sans-serif;
+        --brand-font-body:        'Inter', sans-serif;
+        --focal-x: 50%;
+        --focal-y: 25%;
+      }
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        background: var(--brand-color-background);
+        overflow: hidden;
+      }
+
+      #bg-gradient {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          var(--brand-color-background) 0%,
+          var(--brand-color-primary) 60%,
+          var(--brand-color-background) 100%
+        );
+        opacity: 0;
+      }
+
+      #accent-sweep {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          color-mix(in srgb, var(--brand-color-accent) 15%, transparent) 50%,
+          transparent 100%
+        );
+        transform: translateX(-100%);
+      }
+
+      #photo-container {
+        position: absolute;
+        right: 80px;
+        bottom: 0;
+        width: 680px;
+        height: 1080px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateX(60px);
+      }
+
+      #player-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: var(--focal-x) var(--focal-y);
+      }
+
+      #photo-glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at center bottom,
+          color-mix(in srgb, var(--brand-color-accent) 25%, transparent) 0%,
+          transparent 65%
+        );
+      }
+
+      #content-panel {
+        position: absolute;
+        left: 80px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 860px;
+      }
+
+      #player-number-bg {
+        font-family: var(--brand-font-heading);
+        font-size: 280px;
+        line-height: 1;
+        color: var(--brand-color-accent);
+        opacity: 0;
+        position: absolute;
+        top: -160px;
+        left: -20px;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      #first-name {
+        font-family: var(--brand-font-heading);
+        font-size: 90px;
+        line-height: 1;
+        color: var(--brand-color-text);
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        opacity: 0;
+        transform: translateX(-40px);
+      }
+
+      #last-name {
+        font-family: var(--brand-font-heading);
+        font-size: 140px;
+        line-height: 0.9;
+        color: var(--brand-color-accent);
+        letter-spacing: 8px;
+        text-transform: uppercase;
+        opacity: 0;
+        transform: translateX(-40px);
+      }
+
+      #accent-bar {
+        width: 0px;
+        height: 5px;
+        background: var(--brand-color-accent);
+        margin: 20px 0;
+      }
+
+      #player-position {
+        font-family: var(--brand-font-body);
+        font-size: 22px;
+        letter-spacing: 10px;
+        text-transform: uppercase;
+        color: var(--brand-color-text);
+        opacity: 0;
+      }
+
+      #stats-row {
+        display: flex;
+        gap: 48px;
+        margin-top: 40px;
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      .stat-block { display: flex; flex-direction: column; }
+
+      .stat-value {
+        font-family: var(--brand-font-heading);
+        font-size: 64px;
+        line-height: 1;
+        color: var(--brand-color-text);
+      }
+
+      .stat-label {
+        font-family: var(--brand-font-body);
+        font-size: 14px;
+        letter-spacing: 5px;
+        text-transform: uppercase;
+        color: var(--brand-color-accent);
+        margin-top: 4px;
+        opacity: 0.8;
+      }
+
+      #logo-area {
+        position: absolute;
+        top: 52px;
+        left: 80px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        opacity: 0;
+      }
+
+      #team-logo {
+        height: 80px;
+        width: auto;
+        object-fit: contain;
+      }
+
+      #team-name {
+        font-family: var(--brand-font-body);
+        font-size: 18px;
+        letter-spacing: 7px;
+        text-transform: uppercase;
+        color: var(--brand-color-text);
+        opacity: 0.7;
+      }
+
+      #outro-overlay {
+        position: absolute;
+        inset: 0;
+        background: var(--brand-color-background);
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="30"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="bg-gradient"    class="clip" data-start="0"  data-duration="30" data-track-index="0"></div>
+      <div id="accent-sweep"   class="clip" data-start="0"  data-duration="2"  data-track-index="1"></div>
+
+      <div id="photo-container" class="clip" data-start="1" data-duration="27" data-track-index="2">
+        <img id="player-photo" src="" alt="Player" />
+        <div id="photo-glow"></div>
+      </div>
+
+      <div id="logo-area" class="clip" data-start="5" data-duration="23" data-track-index="3">
+        <img id="team-logo" src="" alt="Team Logo" />
+        <span id="team-name"></span>
+      </div>
+
+      <div id="content-panel" class="clip" data-start="2" data-duration="26" data-track-index="4">
+        <div id="player-number-bg"></div>
+        <div id="first-name"></div>
+        <div id="last-name"></div>
+        <div id="accent-bar"></div>
+        <div id="player-position"></div>
+        <div id="stats-row"></div>
+      </div>
+
+      <div id="outro-overlay" class="clip" data-start="27" data-duration="3" data-track-index="5"></div>
+    </div>
+
+    <script>
+      // ─── Data injection ───────────────────────────────────────
+      const p = window.__playerData || {
+        firstName:  'Jordan',
+        lastName:   'Smith',
+        number:     '12',
+        position:   'Point Guard',
+        photo: {
+          cutout:     '/tests/fixtures/players/test-player.png',
+          focalPoint: { x: 0.5, y: 0.3 }
+        },
+        stats: { ppg: 18.4, apg: 6.1, rpg: 3.2 },
+        logo: { path: '/tests/fixtures/players/test-logo.png' },
+        team: 'Westview Hawks'
+      };
+
+      // ─── Brand token injection ────────────────────────────────
+      const t = window.__brandTokens || {};
+      const root = document.documentElement;
+      if (t.primary)     root.style.setProperty('--brand-color-primary',    t.primary);
+      if (t.accent)      root.style.setProperty('--brand-color-accent',     t.accent);
+      if (t.text)        root.style.setProperty('--brand-color-text',       t.text);
+      if (t.background)  root.style.setProperty('--brand-color-background', t.background);
+      if (t.fontHeading) root.style.setProperty('--brand-font-heading', `'${t.fontHeading}', sans-serif`);
+      if (t.fontBody)    root.style.setProperty('--brand-font-body',    `'${t.fontBody}', sans-serif`);
+
+      // ─── Focal point ──────────────────────────────────────────
+      const fx = (p.photo?.focalPoint?.x ?? 0.5) * 100;
+      const fy = (p.photo?.focalPoint?.y ?? 0.3) * 100;
+      root.style.setProperty('--focal-x', `${fx}%`);
+      root.style.setProperty('--focal-y', `${fy}%`);
+
+      // ─── Populate DOM ─────────────────────────────────────────
+      document.getElementById('first-name').textContent        = p.firstName?.toUpperCase() || '';
+      document.getElementById('last-name').textContent         = p.lastName?.toUpperCase()  || '';
+      document.getElementById('player-number-bg').textContent  = `#${p.number || ''}`;
+      document.getElementById('player-position').textContent   = p.position?.toUpperCase() || '';
+      document.getElementById('team-name').textContent         = p.team?.toUpperCase() || '';
+
+      const logoSrc = p.logo?.path || p.logo || '';
+      if (logoSrc) document.getElementById('team-logo').src = logoSrc;
+
+      const photoSrc = p.photo?.cutout || '';
+      if (photoSrc) document.getElementById('player-photo').src = photoSrc;
+
+      // Stats — up to 3
+      const statsRow = document.getElementById('stats-row');
+      Object.entries(p.stats || {}).slice(0, 3).forEach(([key, val]) => {
+        statsRow.innerHTML += `
+          <div class="stat-block">
+            <span class="stat-value">${val}</span>
+            <span class="stat-label">${key.toUpperCase()}</span>
+          </div>`;
+      });
+
+      // ─── GSAP Timeline ────────────────────────────────────────
+      // 0–1s   background establishes
+      // 1–3s   player photo entrance
+      // 2.5s   number watermark
+      // 3–4s   name reveal
+      // 4–5s   accent bar + position
+      // 5–6s   logo area
+      // 6–8s   stats
+      // 8–27s  hold
+      // 27–30s outro
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.to('#bg-gradient',      { opacity: 1, duration: 1,   ease: 'power2.inOut' },  0)
+        .to('#accent-sweep',     { x: '200%', duration: 1.4,  ease: 'power2.out'   },  0.2)
+        .to('#photo-container',  { opacity: 1, x: 0, duration: 0.9, ease: 'power3.out' }, 1)
+        .to('#player-number-bg', { opacity: 0.1, duration: 0.7, ease: 'power2.out' },  2.5)
+        .to('#first-name',       { opacity: 1, x: 0, duration: 0.5, ease: 'power3.out' }, 3)
+        .to('#last-name',        { opacity: 1, x: 0, duration: 0.5, ease: 'power3.out' }, 3.3)
+        .to('#accent-bar',       { width: 260, duration: 0.4, ease: 'power2.out'    },  3.9)
+        .to('#player-position',  { opacity: 1, duration: 0.4 },  4.3)
+        .to('#logo-area',        { opacity: 1, duration: 0.5, ease: 'power2.out'    },  5)
+        .to('#stats-row',        { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 6)
+        .to('#outro-overlay',    { opacity: 1, duration: 1.5, ease: 'power2.inOut'  }, 27);
+
+      window.__timelines["main"] = tl;
+      tl.play(); // preview only
+    </script>
+  </body>
+</html>

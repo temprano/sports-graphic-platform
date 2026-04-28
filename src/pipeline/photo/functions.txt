@@ -1,0 +1,85 @@
+// ─── Full-Body Validation (Pose Detection) ──────────────────────────
+
+/**
+ * Load Transformers.js pose detection pipeline (lazy-loaded).
+ * Model: Xenova/movenet (lite) or Xenova/blazepose
+ *
+ * @returns {Promise<Function>} Pose detector function
+ */
+async function loadPoseDetector() {
+  if (poseDetector) {
+    return poseDetector;
+  }
+  try {
+    poseDetector = await pipeline('pose-detection', {
+      model: 'Xenova/movenet',
+    });
+    return poseDetector;
+  } catch (error) {
+    throw new Error(`Failed to load pose detection model: ${error.message}`);
+  }
+}
+
+/**
+ * Detect pose keypoints in image.
+ * Returns 17 keypoints: head, shoulders, elbows, wrists, hips, knees, ankles
+ * Keypoints 15 & 16 = left_ankle & right_ankle (both must be detected)
+ *
+ * @param {ImageData|HTMLImageElement|Canvas} image - Input image
+ * @returns {Promise<Object>} { valid, error?, keypoints }
+ */
+async function detectPose(image) {
+  const detector = await loadPoseDetector();
+  try {
+    const poses = await detector(image);
+    if (!poses || poses.length === 0) {
+      return { valid: false, error: 'Please submit a full-body photo with feet clearly visible' };
+    }
+    const pose = poses[0]; // Use first pose
+    return validateFullBody(pose.keypoints, image.width, image.height);
+  } catch (error) {
+    return { valid: false, error: `Pose detection error: ${error.message}` };
+  }
+}
+
+/**
+ * Validate full-body: feet must be visible and within frame
+ *
+ * Checks:
+ * 1. Both ankles detected with confidence >= 0.5
+ * 2. Vertical span (foot_y - head_y) >= 75% of image height
+ * 3. Feet not cropped: foot_y <= height * (1 - EDGE_MARGIN)
+ *
+ * @param {Array} keypoints - Pose keypoints [{ x, y, score }, ...]
+ * @param {number} imageWidth - Image width
+ * @param {number} imageHeight - Image height
+ * @returns {Object} { valid, error?, keypoints }
+ */
+function validateFullBody(keypoints, imageWidth, imageHeight) {
+  // Keypoint indices: 5/6=shoulders, 9/10=hips, 15/16=ankles
+  const head = keypoints[0];      // nose
+  const leftAnkle = keypoints[15];
+  const rightAnkle = keypoints[16];
+
+  // Check both ankles detected
+  if (!leftAnkle || !rightAnkle || leftAnkle.score < MIN_POSE_CONFIDENCE || rightAnkle.score < MIN_POSE_CONFIDENCE) {
+    return { valid: false, error: 'Feet not detected. Please submit a full-body photo' };
+  }
+
+  // Check vertical span (feet to head >= 75% of height)
+  const headY = head?.y || 0;
+  const feetY = Math.max(leftAnkle.y, rightAnkle.y);
+  const verticalSpan = feetY - headY;
+  const spanPercent = verticalSpan / imageHeight;
+
+  if (spanPercent < MIN_VERTICAL_SPAN) {
+    return { valid: false, error: 'Subject not full-body. Please include entire body from head to feet' };
+  }
+
+  // Check feet not cropped (within 8% of bottom)
+  if (feetY > imageHeight * (1 - EDGE_MARGIN)) {
+    return { valid: false, error: 'Feet are cropped. Please include the entire lower body' };
+  }
+
+  return { valid: true, keypoints };
+}

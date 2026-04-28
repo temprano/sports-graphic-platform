@@ -1,0 +1,123 @@
+/**
+ * cinematic-dark — Poster 16x20
+ * Photoshop UXP Script
+ *
+ * Output: 4800x6000px, 300dpi, CMYK PDF
+ *
+ * Called by Component 2 automation pipeline.
+ * Receives player data via __playerData global injected before execution.
+ *
+ * Usage (from pipeline):
+ *   await photoshop.runScript('./brands/cinematic-dark/print/poster-16x20.psjs', {
+ *     playerData,
+ *     brandTokens,
+ *     outputPath
+ *   });
+ */
+
+'use strict';
+
+const { app, core, action, constants } = require('photoshop');
+const { storage } = require('uxp');
+
+// ─── Player data injected by pipeline ──────────────────────────
+const p = typeof __playerData !== 'undefined' ? __playerData : null;
+const tokens = typeof __brandTokens !== 'undefined' ? __brandTokens : {};
+const outputPath = typeof __outputPath !== 'undefined' ? __outputPath : null;
+
+if (!p) throw new Error('poster-16x20.psjs: __playerData not injected');
+if (!outputPath) throw new Error('poster-16x20.psjs: __outputPath not injected');
+
+// ─── Document spec ──────────────────────────────────────────────
+const DOC_WIDTH_PX  = 4800;  // 16" @ 300dpi
+const DOC_HEIGHT_PX = 6000;  // 20" @ 300dpi
+const DOC_DPI       = 300;
+const BLEED_PX      = 38;    // 0.125" bleed
+
+// ─── Brand token defaults ───────────────────────────────────────
+const COLORS = {
+  primary:    tokens.primary    || '#1a1a2e',
+  accent:     tokens.accent     || '#e94560',
+  text:       tokens.text       || '#ffffff',
+  background: tokens.background || '#0f0f23',
+};
+
+const FONTS = {
+  heading: tokens.fontHeading || 'Bebas Neue',
+  body:    tokens.fontBody    || 'Inter',
+};
+
+// ─── Helper: hex to RGB ─────────────────────────────────────────
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    red:   parseInt(result[1], 16),
+    green: parseInt(result[2], 16),
+    blue:  parseInt(result[3], 16)
+  } : { red: 255, green: 255, blue: 255 };
+}
+
+// ─── Main ───────────────────────────────────────────────────────
+async function buildPoster() {
+  await core.executeAsModal(async () => {
+
+    // 1. Create new document
+    const doc = await app.documents.add({
+      width:      DOC_WIDTH_PX,
+      height:     DOC_HEIGHT_PX,
+      resolution: DOC_DPI,
+      mode:       constants.ColorMode.CMYK,
+      fill:       constants.DocumentFill.TRANSPARENT,
+      name:       `poster_${p.slug || p.lastName}`,
+    });
+
+    // 2. Background layer
+    const bgLayer = await doc.layers.add();
+    bgLayer.name = 'Background';
+    await bgLayer.fill(hexToRgb(COLORS.background));
+
+    // 3. Player photo
+    if (p.photo?.cutout) {
+      const photoLayer = await doc.layers.add();
+      photoLayer.name = 'Player Photo';
+      // TODO: place photo, scale to fill lower 70% of document
+      // Focal point from p.photo.focalPoint drives positioning
+    }
+
+    // 4. Gradient overlay
+    const gradLayer = await doc.layers.add();
+    gradLayer.name = 'Gradient Overlay';
+    // TODO: dark-to-transparent gradient from bottom third
+
+    // 5. Player name (last name large, first name above)
+    // TODO: text layers using FONTS.heading, COLORS.accent / COLORS.text
+
+    // 6. Number watermark (large, low opacity)
+    // TODO: #XX in FONTS.heading at 15% opacity
+
+    // 7. Position + stats bar
+    // TODO: horizontal rule in COLORS.accent + position text
+
+    // 8. Team logo (top corner)
+    if (p.logo) {
+      // TODO: place logo, position top-left within safe zone
+    }
+
+    // 9. Flatten and export PDF (CMYK, press quality)
+    const fs = await storage.localFileSystem.getFileForSaving(outputPath, {
+      types: ['pdf']
+    });
+    await doc.exportFile(fs, constants.ExportFormat.PDF, {
+      encoding: constants.PDFEncoding.ZIP,
+      colorProfile: 'U.S. Web Coated (SWOP) v2',
+    });
+
+    await doc.closeWithoutSaving();
+
+  }, { commandName: 'Build Poster 16x20' });
+}
+
+buildPoster().catch(err => {
+  console.error('poster-16x20.psjs failed:', err);
+  throw err;
+});

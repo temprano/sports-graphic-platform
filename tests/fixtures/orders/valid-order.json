@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0",
+  "orderId": "ord_test_001",
+  "team": "Westview Hawks",
+  "sport": "basketball",
+  "school": "Westview High School",
+  "season": "2026-spring",
+  "brand": "cinematic-dark",
+  "colors": {
+    "primary": "#1a1a2e",
+    "accent": "#e94560",
+    "text": "#ffffff",
+    "background": "#0f0f23"
+  },
+  "fonts": {
+    "heading": "Bebas Neue",
+    "body": "Inter"
+  },
+  "logo": {
+    "path": "./fixtures/players/test-logo.png",
+    "darkVariant": "./fixtures/players/test-logo.png"
+  },
+  "players": [
+    {
+      "id": "player_001",
+      "slug": "jordan-smith",
+      "name": "Jordan Smith",
+      "firstName": "Jordan",
+      "lastName": "Smith",
+      "number": "12",
+      "position": "Point Guard",
+      "year": "Senior",
+      "photo": {
+        "original": "./fixtures/players/valid-photo.jpg",
+        "cutout": "./fixtures/players/valid-cutout.png",
+        "focalPoint": { "x": 0.5, "y": 0.3 }
+      },
+      "stats": { "ppg": 18.4, "apg": 6.1, "rpg": 3.2 },
+      "consentLog": {
+        "backgroundRemoval": true,
+        "colorAdjustment": true,
+        "poseAdjustment": true,
+        "aiMotion": false,
+        "marketingUse": false,
+        "signedBy": "user_test_parent",
+        "timestamp": "2026-04-22T14:23:00Z",
+        "ipAddress": "hashed_test",
+        "orderVersion": "1.0"
+      }
+    },
+    {
+      "id": "player_002",
+      "slug": "tyler-jones",
+      "name": "Tyler Jones",
+      "firstName": "Tyler",
+      "lastName": "Jones",
+      "number": "24",
+      "position": "Shooting Guard",
+      "year": "Junior",
+      "photo": {
+        "original": "./fixtures/players/valid-photo.jpg",
+        "cutout": "./fixtures/players/valid-cutout.png",
+        "focalPoint": { "x": 0.5, "y": 0.28 }
+      },
+      "stats": { "ppg": 14.2, "apg": 2.8, "rpg": 4.1 },
+      "consentLog": {
+        "backgroundRemoval": true,
+        "colorAdjustment": true,
+        "poseAdjustment": false,
+        "aiMotion": false,
+        "marketingUse": false,
+        "signedBy": "user_test_parent",
+        "timestamp": "2026-04-22T14:25:00Z",
+        "ipAddress": "hashed_test",
+        "orderVersion": "1.0"
+      }
+    }
+  ],
+  "deliverables": [
+    { "type": "video", "format": "player-intro-full",  "width": 1920, "height": 1080 },
+    { "type": "video", "format": "player-intro-short", "width": 1080, "height": 1920 },
+    { "type": "print", "format": "poster-16x20" },
+    { "type": "print", "format": "player-card-4x6" }
+  ],
+  "parentStore": {
+    "enabled": true,
+    "visibility": "private",
+    "shareCode": "HAWKS26TEST",
+    "openDate": "2026-05-01",
+    "closeDate": "2026-05-31",
+    "allowedProducts": ["poster-8x10", "poster-11x14", "digital-pack"]
+  }
+}

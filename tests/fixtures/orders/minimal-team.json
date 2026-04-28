@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "orderId": "ord_test_001",
+  "team": "Test Hawks",
+  "sport": "basketball",
+  "school": "Test High School",
+  "season": "2026-spring",
+  "brand": "cinematic-dark",
+  "colors": {
+    "primary": "#1a1a2e",
+    "accent": "#e94560",
+    "text": "#ffffff",
+    "background": "#0f0f23"
+  },
+  "fonts": {
+    "heading": "Bebas Neue",
+    "body": "Inter"
+  },
+  "logo": {
+    "path": "/tests/fixtures/players/test-logo.png"
+  },
+  "players": [
+    {
+      "id": "player_test_001",
+      "slug": "test-player",
+      "name": "Test Player",
+      "firstName": "Test",
+      "lastName": "Player",
+      "number": "99",
+      "position": "Guard",
+      "year": "Senior",
+      "photo": {
+        "original": "/tests/fixtures/players/test-player.png",
+        "cutout": "/tests/fixtures/players/test-player.png",
+        "focalPoint": { "x": 0.5, "y": 0.3 }
+      },
+      "stats": { "ppg": 10.0, "apg": 5.0, "rpg": 2.0 },
+      "consentLog": {
+        "backgroundRemoval": true,
+        "colorAdjustment": true,
+        "poseAdjustment": false,
+        "aiMotion": false,
+        "marketingUse": false,
+        "signedBy": "user_test_001",
+        "timestamp": "2026-04-24T10:00:00Z",
+        "ipAddress": "hashed",
+        "orderVersion": "1.0"
+      }
+    }
+  ],
+  "deliverables": [
+    { "type": "video", "format": "player-intro-full", "width": 1920, "height": 1080 },
+    { "type": "video", "format": "player-intro-short", "width": 1080, "height": 1920 }
+  ],
+  "parentStore": {
+    "enabled": false
+  }
+}
