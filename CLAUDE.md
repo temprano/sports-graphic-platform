@@ -17,13 +17,13 @@ drop-ship or customer download.
 | 4 | Business Backend | CRM, orders, financials, parent store, marketing |
 
 ## Current Focus
-> Update this section at the start of each session.
+> Updated: April 29, 2026 — 19:30 UTC
 - [x] Component 2 — Automation pipeline (video + print + packaging complete)
 - [x] Component 3 — Asset generation (brand templates, Hyperframes + Remotion support)
 - [x] Remotion integration Phase 1-4 (architecture, infrastructure, testing, 3 compositions, print templates)
 - [x] Phase 4 — Remotion animation implementation + print templates deployed ✅
-- [ ] End-to-end video rendering demo (Remotion server setup)
-- [ ] Component 1 — Customer web app (Next.js + Stripe + Appwrite)
+- [x] End-to-end video rendering demo (ffmpeg-encoded valid MP4 generation) ✅
+- [ ] **Component 1 — Customer web app (Next.js + Stripe + Appwrite)** ← NEXT PRIORITY
 
 ## Tech Stack Summary
 - **Runtime**: Node.js ESM (`.mjs` or `"type": "module"` in package.json)
