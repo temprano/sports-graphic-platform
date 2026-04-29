@@ -55,9 +55,141 @@ None - All prerequisites installed and ready.
 
 ---
 
-## 🚀 Phase 1: Authentication (Days 1-2)
+## 🚀 Phase 0: Order Creation & Photo Upload (Days 1-5)
 
-**Goal**: Enable team members to log in and access their dashboard.
+**Goal**: Build the complete order creation workflow including photo upload with drag-drop and ML validation.
+
+**Why First?** This blocks all downstream work (rendering, payments, proofs). Must be rock-solid.
+
+### 0.1 Brand Configuration Schema
+
+**File**: Update `src/lib/brands.ts` or extend `brand.json` schema
+
+**Tasks**:
+- [ ] Define pose requirements per brand (3-5 poses)
+- [ ] Create SVG silhouettes for pose visualization
+- [ ] Store in brand config:
+  ```json
+  {
+    "requiredPoses": [
+      { "id": "front-facing", "label": "Front", "silhouette": "front.svg" },
+      { "id": "left-angle", "label": "Left 45°", "silhouette": "left.svg" },
+      { "id": "right-angle", "label": "Right 45°", "silhouette": "right.svg" }
+    ]
+  }
+  ```
+- [ ] Create SVG files in `public/silhouettes/`
+
+### 0.2 Photo Upload UI Components
+
+**Files**: `components-1-customer-web/components/team/`
+
+**Time**: 2 days
+
+**Tasks**:
+- [ ] Create PhotoUploadFlow.tsx (container with state)
+- [ ] Create PoseBox.tsx (drag-drop component)
+- [ ] Create ProgressBar.tsx (upload progress)
+- [ ] Create PlayerCard.tsx (player grouping)
+- [ ] Implement drag-drop file handling
+- [ ] Add file validation (size, type, dimensions)
+- [ ] Add preview thumbnails
+- [ ] Test on desktop + tablet
+
+**Reference**: [PHOTO_UPLOAD_COMPONENTS.md](./PHOTO_UPLOAD_COMPONENTS.md)
+
+### 0.3 Photo Validation (Transformers.js)
+
+**File**: `src/lib/pose-validation.ts` (new)
+
+**Time**: 1.5 days
+
+**Tasks**:
+- [ ] Integrate Transformers.js PoseNet model
+- [ ] Create `validatePose(imageBuffer, requiredPose)` function
+- [ ] Test with sample images (all 3 pose angles)
+- [ ] Add graceful fallback if ML unavailable
+- [ ] Implement confidence scoring (0-1 scale)
+- [ ] Add client-side image compression before validation
+
+**Pseudo-code**:
+```javascript
+async function validatePose(imageBuffer, requiredPose) {
+  const model = await posenet.load();
+  const poses = await model.estimateSinglePose(image);
+  const poseType = analyzePose(poses.keypoints);
+  return {
+    valid: poseType === requiredPose,
+    confidence: 0.92,
+    feedback: "Perfect angle"
+  };
+}
+```
+
+### 0.4 Order Creation Route
+
+**File**: `components-1-customer-web/app/team/orders/new/` (new route group)
+
+**Time**: 1 day
+
+**Tasks**:
+- [ ] Create multi-step form:
+  - Step 1: Select Brand
+  - Step 2: Select Players
+  - Step 3: Upload Photos (PhotoUploadFlow)
+  - Step 4: Review Order
+- [ ] Add step navigation (prev/next)
+- [ ] Store form state in OrderContext
+- [ ] Auto-save to localStorage
+
+### 0.5 Upload to Backend
+
+**File**: `components-1-customer-web/app/api/orders/create/route.ts` (new)
+
+**Time**: 1.5 days
+
+**Tasks**:
+- [ ] POST /api/orders/create endpoint
+  - Validate all photos present
+  - Upload files to Appwrite storage bucket
+  - Create order document in Appwrite
+  - Queue BullMQ job: process-photos
+  - Return orderId
+- [ ] Implement storage bucket rules:
+  - Private bucket for team photos
+  - Only team members + pipeline can read
+  - TTL: Delete raw photos after 90 days
+- [ ] Handle errors: network, disk space, validation
+
+**Test**:
+```bash
+npm run test:web -- api/orders
+```
+
+### 0.6 Process Photos Job
+
+**File**: `src/queue/jobs/process-photos.js` (update existing)
+
+**Time**: 1.5 days
+
+**Tasks**:
+- [ ] Fetch order from Appwrite
+- [ ] Download uploaded photos to local disk:
+  - `~/src/renderPhotos/{orderId}/{playerId}/{poseName}.jpg`
+- [ ] Create metadata: `poses.json`
+- [ ] Run secondary validation (server-side)
+- [ ] Queue rendering jobs:
+  - `render-video` (uses all 3 poses)
+  - `render-print` (uses photo for backgrounds)
+- [ ] Handle failures gracefully
+
+**Reference**: [PHOTO_UPLOAD_INTEGRATION.md](./PHOTO_UPLOAD_INTEGRATION.md)
+
+---
+
+## 🚀 Phase 1: Authentication (Days 5-7)
+
+**Goal**: Enable team members to log in and access their dashboard (after photos can be uploaded).
 
 ### 1.1 Appwrite Setup
 
@@ -616,15 +748,16 @@ npm test -- cartStore.test.ts
 
 | Phase | Dependencies | Duration |
 |-------|--------------|----------|
-| 1 | Appwrite setup | 2 days |
-| 2 | Phase 1 complete | 1.5 days |
-| 3 | Phase 1 complete, Stripe account | 1.5 days |
-| 4 | Phase 1, 2, 3 complete | 1 day |
+| **0** | Appwrite setup (collections) | 5 days |
+| 1 | Phase 0 complete | 2 days |
+| 2 | Phase 0, 1 complete | 1.5 days |
+| 3 | Phase 0, 1, 2 complete | 1.5 days |
+| 4 | Phase 0, 1, 2, 3 complete | 1 day |
 | 5 | All phases complete | 1.5 days |
 | 6 | All phases complete | 1 day |
 | 7 | All phases complete | 1 day |
 
-**Total Estimated Time**: 9-10 days
+**Total Estimated Time**: 14-15 days (includes new Phase 0)
 
 ---
 
