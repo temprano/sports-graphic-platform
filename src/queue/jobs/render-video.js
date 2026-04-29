@@ -123,25 +123,28 @@ export async function run(data) {
       continue;
     }
 
-    // Load HTML template
+    // Load HTML template (only for Hyperframes engine)
     let htmlTemplate;
-    try {
-      const templatePath = `${compositionsPath}/${compositionDef.file}`;
-      htmlTemplate = readFileSync(templatePath, 'utf-8');
-    } catch (error) {
-      logger.error('Failed to load composition template', {
-        orderId,
-        format: compositionKey,
-        error: error.message,
-      });
-      failedCount++;
-      videos.push({
-        format: compositionKey,
-        status: 'failed',
-        error: `template not found: ${compositionDef.file}`,
-      });
-      continue;
+    if (renderEngine === 'hyperframes') {
+      try {
+        const templatePath = `${compositionsPath}/${compositionDef.file}`;
+        htmlTemplate = readFileSync(templatePath, 'utf-8');
+      } catch (error) {
+        logger.error('Failed to load composition template', {
+          orderId,
+          format: compositionKey,
+          error: error.message,
+        });
+        failedCount++;
+        videos.push({
+          format: compositionKey,
+          status: 'failed',
+          error: `template not found: ${compositionDef.file}`,
+        });
+        continue;
+      }
     }
+    // For Remotion, compositionDef.compositionId is used instead of htmlTemplate
 
     // Render for each player
     for (const player of teamData.players) {
