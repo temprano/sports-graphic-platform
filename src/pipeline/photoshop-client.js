@@ -30,14 +30,15 @@ export async function isReachable() {
  * Render a single print asset with Photoshop UXP
  *
  * @param {object} options
- * @param {string} options.script      - path to .psjs UXP script
- * @param {object} options.playerData  - player info to inject
- * @param {object} options.brandTokens - brand design tokens
- * @param {string} options.outputPath  - where to write PDF
+ * @param {string} options.script       - path to .psjs UXP script
+ * @param {object} options.printConfig  - print size/dpi configuration (dynamic sizing)
+ * @param {object} options.playerData   - player info to inject
+ * @param {object} options.brandTokens  - brand design tokens
+ * @param {string} options.outputPath   - where to write PDF
  * @returns {Promise<{outputPath, fileSize}>}
  */
 export async function renderPrint(options) {
-  const { script, playerData, brandTokens, outputPath } = options;
+  const { script, printConfig, playerData, brandTokens, outputPath } = options;
 
   if (!script || !playerData || !brandTokens || !outputPath) {
     throw new Error(
@@ -45,8 +46,13 @@ export async function renderPrint(options) {
     );
   }
 
+  if (!printConfig) {
+    throw new Error('Missing required render option: printConfig (size/dpi configuration)');
+  }
+
   logger.info('Starting Photoshop render', {
-    script,
+    format: printConfig.format || 'unknown',
+    size: `${printConfig.width}x${printConfig.height}${printConfig.unit}`,
     playerSlug: playerData.slug,
     outputPath,
   });
@@ -58,6 +64,7 @@ export async function renderPrint(options) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           script,
+          printConfig,
           playerData,
           brandTokens,
           outputPath,

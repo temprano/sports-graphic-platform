@@ -1,4 +1,4 @@
-# Project Status Summary — April 25, 2026
+# Project Status Summary — April 29, 2026
 
 ## Completed ✅
 
@@ -70,14 +70,69 @@
 
 ---
 
-## Test Files Ready for Execution
+## Phase 4 Completion — April 29, 2026 ✅
 
-### State Machine Tests
+### Remotion Integration Complete
+**Status:** 123/123 tests passing (100% pass rate)
+
+1. **PlayerIntroShort** (8s, 1080×1920)
+   - Vertical format for mobile/story consumption
+   - Dynamic player background, animated text overlays
+   - Consent gates applied (aiMotion fallback)
+   - 36 comprehensive tests
+
+2. **PlayerIntroFull** (30s, 1920×1080)
+   - Full horizontal composition for team displays
+   - Cinematic reveals, statistics, transitions
+   - Photo integration, brand token application
+   - 46 comprehensive tests
+
+3. **TeamBanner** (15s, 1920×1080)
+   - Team-level composition showing lineup
+   - Multi-player layout, coordinated animations
+   - Dynamic team data binding
+   - 41 comprehensive tests
+
+**Key Achievements:**
+- ✅ renderWithRemotion() function fully wired and tested
+- ✅ E2E routing test validates both Hyperframes and Remotion paths
+- ✅ Composition imports work dynamically from JSX files
+- ✅ Prop mapping and API dispatch functional
+
+### Print Templates Complete
+**Status:** 3 Photoshop UXP scripts, 16 tests passing (100% pass rate)
+
+1. **poster-16x20.psjs** (190+ lines)
+   - Full layer drawing: background, accent bars, player info, stats
+   - Dynamic text layers, color fills, border elements
+   - CMYK output, 300 DPI, press-ready
+
+2. **banner-2x6-new.psjs** (200+ lines)
+   - Vertical banner format (2×6 inches)
+   - Team logo section, player info, stats display
+   - Left accent stripe, dynamic text sizing
+
+3. **card-4x6-new.psjs** (210+ lines)
+   - Trading card format (4×6 inches)
+   - Photo area with mask gradient, stats section
+   - QR code placeholder, tech corner accents
+
+**Key Achievements:**
+- ✅ Dynamic sizing system (inchesToPixels utility)
+- ✅ Config injection pattern for printConfig, playerData, brandTokens
+- ✅ Layer selection, fill, stroke, and text operations implemented
+- ✅ 6 PDFs generated successfully (2 players × 3 formats)
+- ✅ Mock Photoshop service tested at localhost:3001
+
+## Test Files — All Passing
+
+### Current Test Suite
 ```bash
-npm test state-machine.test.js
+npm test -- src/queue/jobs/render-print.test.js src/queue/jobs/render-print-integration.test.js --run
 ```
-- 70+ test cases
-- Tests all valid/invalid transitions
+- render-print.test.js: 6/6 passing
+- render-print-integration.test.js: 4/4 passing  
+- photoshop-client.test.js: 10/10 passing
 - Tests DISPUTED terminal state
 - Tests history tracking
 

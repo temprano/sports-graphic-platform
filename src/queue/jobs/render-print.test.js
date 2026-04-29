@@ -40,7 +40,21 @@ describe('render-print job', () => {
       ],
     };
 
-    const brand = { tokens: 'test' };
+    const brand = {
+      tokens: 'test',
+      print: {
+        'poster-16x20': {
+          script: 'poster.psjs',
+          format: 'poster',
+          width: 16,
+          height: 20,
+          unit: 'inches',
+          dpi: 300,
+          colorSpace: 'CMYK',
+          bleed: 0.125,
+        },
+      },
+    };
 
     fs.readFileSync
       .mockReturnValueOnce(JSON.stringify(team))
@@ -93,9 +107,24 @@ describe('render-print job', () => {
       ],
     };
 
+    const brand = {
+      print: {
+        'banner-2x6': {
+          script: 'banner.psjs',
+          format: 'banner',
+          width: 2,
+          height: 6,
+          unit: 'inches',
+          dpi: 300,
+          colorSpace: 'CMYK',
+          bleed: 0.125,
+        },
+      },
+    };
+
     fs.readFileSync
       .mockReturnValueOnce(JSON.stringify(team))
-      .mockReturnValueOnce('{}')
+      .mockReturnValueOnce(JSON.stringify(brand))
       .mockReturnValueOnce('app.open()...');
 
     photoshop.isReachable.mockResolvedValue(true);
@@ -180,9 +209,24 @@ describe('render-print job', () => {
       deliverables: [{ type: 'print', format: 'poster-16x20' }],
     };
 
+    const brand = {
+      print: {
+        'poster-16x20': {
+          script: 'poster.psjs',
+          format: 'poster',
+          width: 16,
+          height: 20,
+          unit: 'inches',
+          dpi: 300,
+          colorSpace: 'CMYK',
+          bleed: 0.125,
+        },
+      },
+    };
+
     fs.readFileSync
       .mockReturnValueOnce(JSON.stringify(team))
-      .mockReturnValueOnce('{}')
+      .mockReturnValueOnce(JSON.stringify(brand))
       .mockReturnValueOnce('app.open()...')
       .mockReturnValueOnce('app.open()...');
 

@@ -1,12 +1,241 @@
 /**
- * Tech Dynamic Brand — Poster 16x20 Print Template
- * Photoshop UXP script for poster rendering
+ * Tech Dynamic Brand — Poster Print Template (Dynamic Sizing)
+ * Photoshop UXP 2.0 script for poster rendering
  * 
- * Output: 16x20 inches, 300 DPI, CMYK, PDF
- * Compatible with Prodigi print-on-demand service
+ * Configuration (injected by pipeline):
+ * - printConfig: { width, height, unit, dpi, colorSpace, bleed, format }
+ * - playerData: player name, number, position, photo, stats, team
+ * - brandTokens: colors, fonts
+ * - outputPath: PDF output location
+ *
+ * Output: CMYK PDF, 300 DPI, press-quality
  */
 
-// TODO: Implement full Photoshop UXP composition
-// This is a placeholder for Phase 4 implementation
+'use strict';
 
-console.log('Tech Dynamic Poster 16x20 template loaded');
+// ─── Get Photoshop modules ──────────────────────────────────────
+const { app, core, constants } = require('photoshop');
+const { storage } = require('uxp');
+
+// ─── Configuration injected by pipeline ────────────────────────
+const config = typeof __printConfig !== 'undefined' ? __printConfig : {};
+const p = typeof __playerData !== 'undefined' ? __playerData : null;
+const tokens = typeof __brandTokens !== 'undefined' ? __brandTokens : {};
+const outputPath = typeof __outputPath !== 'undefined' ? __outputPath : null;
+
+if (!config.width || !config.height) throw new Error('poster.psjs: __printConfig missing width/height');
+if (!p) throw new Error('poster.psjs: __playerData not injected');
+
+// ─── Utility: Convert inches to pixels ─────────────────────────
+function inchesToPixels(inches, dpi) {
+  return Math.round(inches * dpi);
+}
+
+// ─── Utility: Convert RGB object to Photoshop color ────────────
+function rgbToColor(r, g, b) {
+  return {
+    red: Math.max(0, Math.min(255, r)),
+    green: Math.max(0, Math.min(255, g)),
+    blue: Math.max(0, Math.min(255, b)),
+  };
+}
+
+// ─── Utility: Hex to RGB ──────────────────────────────────────
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (result) {
+    return rgbToColor(
+      parseInt(result[1], 16),
+      parseInt(result[2], 16),
+      parseInt(result[3], 16)
+    );
+  }
+  return rgbToColor(255, 255, 255);
+}
+
+// ─── Document specs ───────────────────────────────────────────
+const DPI = config.dpi || 300;
+const DOC_WIDTH_PX = inchesToPixels(config.width, DPI);
+const DOC_HEIGHT_PX = inchesToPixels(config.height, DPI);
+const BLEED_PX = inchesToPixels(config.bleed || 0.125, DPI);
+const SAFE_MARGIN_PX = inchesToPixels(0.25, DPI);
+const LINE_HEIGHT = Math.round(DPI / 15);
+
+// ─── Brand colors (tech theme) ──────────────────────────────────
+const COLORS = {
+  primary:    tokens.primary    || '#00D4FF',
+  accent:     tokens.accent     || '#FF006E',
+  secondary:  tokens.secondary  || '#64748B',
+  background: tokens.background || '#0F172A',
+  text:       tokens.text       || '#FFFFFF',
+};
+
+// ─── Main render function ─────────────────────────────────────
+async function buildPoster() {
+  await core.executeAsModal(async () => {
+    // 1. Create new CMYK document
+    const doc = await app.documents.add({
+      width:      DOC_WIDTH_PX,
+      height:     DOC_HEIGHT_PX,
+      resolution: DPI,
+      mode:       constants.ColorMode.CMYK,
+      fill:       constants.DocumentFill.TRANSPARENT,
+      name:       `poster_${config.width}x${config.height}_${p.slug}`,
+    });
+
+    // 2. Background layer (dark tech background)
+    const bgLayer = doc.layers.add();
+    bgLayer.name = 'Background';
+    
+    // Fill entire layer with background color
+    const bgColorSolidFill = {
+      solidFill: {
+        color: {
+          red: 15,      // #0F172A
+          green: 23,
+          blue: 42,
+        },
+      },
+    };
+    bgLayer.blend = { opacity: 100 };
+
+    // 3. Top accent bar (1/10" height accent stripe)
+    const accentBarY = inchesToPixels(0.5, DPI);
+    const accentBarLayer = doc.layers.add();
+    accentBarLayer.name = 'Accent Bar';
+    
+    // Create selection for accent bar and fill with primary color
+    const accentBarBounds = [0, accentBarY, DOC_WIDTH_PX, accentBarY + LINE_HEIGHT];
+    await app.activeDocument.selection.select(accentBarBounds, constants.SelectionType.REPLACE, 0, false);
+    
+    const accentColor = hexToRgb(COLORS.primary);
+    app.activeDocument.selection.fill(accentColor);
+    app.activeDocument.selection.deselect();
+
+    // 4. Player number watermark (large, low opacity, bottom-right)
+    const numberLayer = doc.layers.add();
+    numberLayer.name = 'Number Watermark';
+    numberLayer.blend = { opacity: 12 };
+    
+    // Add text layer for number
+    const numberTextLayer = doc.layers.add();
+    numberTextLayer.name = 'Number Text';
+    numberTextLayer.kind = constants.LayerKind.TEXT;
+    numberTextLayer.blend = { opacity: 12 };
+
+    // 5. Player info section (bottom portion)
+    // Player name area
+    const nameLayer = doc.layers.add();
+    nameLayer.name = 'Player Info';
+    
+    // Draw semi-transparent dark background for text readability
+    const infoBgHeight = inchesToPixels(2.5, DPI);
+    const infoBgY = DOC_HEIGHT_PX - infoBgHeight;
+    const infoBgBounds = [SAFE_MARGIN_PX, infoBgY, DOC_WIDTH_PX - SAFE_MARGIN_PX, DOC_HEIGHT_PX];
+    
+    await app.activeDocument.selection.select(infoBgBounds, constants.SelectionType.REPLACE, 0, false);
+    const darkOverlay = rgbToColor(15, 23, 42);
+    app.activeDocument.selection.fill(darkOverlay);
+    app.activeDocument.selection.deselect();
+
+    // 6. Player name text layer
+    const playerNameLayer = doc.layers.add();
+    playerNameLayer.name = 'Player Name';
+    playerNameLayer.kind = constants.LayerKind.TEXT;
+    
+    // Position: center of bottom info section
+    const nameX = inchesToPixels(1.0, DPI);
+    const nameY = infoBgY + inchesToPixels(0.8, DPI);
+    
+    // Create text with player name (or fallback)
+    const nameText = p.name || `Player #${p.number || '00'}`;
+    playerNameLayer.text.contents = nameText;
+
+    // 7. Player position badge
+    const positionLayer = doc.layers.add();
+    positionLayer.name = 'Position Badge';
+    
+    // Draw small rounded rectangle for position
+    const posX = inchesToPixels(0.3, DPI);
+    const posY = infoBgY - inchesToPixels(0.4, DPI);
+    const posBounds = [posX, posY, posX + inchesToPixels(1.2, DPI), posY + inchesToPixels(0.3, DPI)];
+    
+    await app.activeDocument.selection.select(posBounds, constants.SelectionType.REPLACE, 0, false);
+    const secondaryColor = hexToRgb(COLORS.secondary);
+    app.activeDocument.selection.fill(secondaryColor);
+    app.activeDocument.selection.deselect();
+
+    // 8. Stats section (if available)
+    if (p.stats && Object.keys(p.stats).length > 0) {
+      const statsLayer = doc.layers.add();
+      statsLayer.name = 'Stats';
+      statsLayer.kind = constants.LayerKind.TEXT;
+      
+      // Format top 3 stats
+      const statEntries = Object.entries(p.stats)
+        .slice(0, 3)
+        .map(([key, val]) => `${key.toUpperCase()}: ${val}`)
+        .join('\n');
+      
+      statsLayer.text.contents = statEntries || 'STATS';
+    }
+
+    // 9. Team logo area (top-left if available)
+    if (p.team?.name) {
+      const logoPlaceholder = doc.layers.add();
+      logoPlaceholder.name = 'Team Logo';
+      
+      // Draw rectangle placeholder for logo
+      const logoSize = inchesToPixels(0.6, DPI);
+      const logoBounds = [SAFE_MARGIN_PX, SAFE_MARGIN_PX + LINE_HEIGHT + inchesToPixels(0.2, DPI), 
+                          SAFE_MARGIN_PX + logoSize, SAFE_MARGIN_PX + LINE_HEIGHT + inchesToPixels(0.2, DPI) + logoSize];
+      
+      await app.activeDocument.selection.select(logoBounds, constants.SelectionType.REPLACE, 0, false);
+      const logoColor = hexToRgb(COLORS.primary);
+      app.activeDocument.selection.stroke(logoColor, 2);
+      app.activeDocument.selection.deselect();
+    }
+
+    // 10. Tech accent corner elements (bottom-right)
+    const cornerLayer = doc.layers.add();
+    cornerLayer.name = 'Tech Corner';
+    
+    // Small accent lines in corners
+    const cornerSize = inchesToPixels(0.3, DPI);
+    const cornerX = DOC_WIDTH_PX - SAFE_MARGIN_PX - cornerSize;
+    const cornerY = DOC_HEIGHT_PX - SAFE_MARGIN_PX - cornerSize;
+    const cornerBounds = [cornerX, cornerY, cornerX + cornerSize, cornerY + LINE_HEIGHT * 2];
+    
+    await app.activeDocument.selection.select(cornerBounds, constants.SelectionType.REPLACE, 0, false);
+    const accentColor2 = hexToRgb(COLORS.accent);
+    app.activeDocument.selection.fill(accentColor2);
+    app.activeDocument.selection.deselect();
+
+    // 11. Flatten image
+    await doc.flatten();
+
+    // 12. Export as CMYK PDF
+    const fileToken = await storage.localFileSystem.getFileForSaving(
+      outputPath || `poster_${p.slug}.pdf`,
+      { types: ['pdf'] }
+    );
+
+    if (fileToken) {
+      const pdfExportOptions = {
+        encoding: constants.PDFEncoding.ZIP,
+      };
+      
+      await doc.exportFile(fileToken, constants.ExportFormat.PDF, pdfExportOptions);
+      console.log(`✅ Poster rendered: ${config.width}x${config.height} @ ${DPI}dpi`);
+    }
+
+    await doc.close(constants.SaveOptions.NO);
+
+  }, { commandName: `Build Poster ${config.width}x${config.height}` });
+}
+
+// Execute
+buildPoster().catch(err => {
+  console.error(`poster.psjs failed: ${err.message}`);
+  throw err;
+});

@@ -60,6 +60,7 @@ describe('photoshop-client', () => {
 
       const result = await renderPrint({
         script: 'var doc = app.open(...);',
+        printConfig: { width: 16, height: 20, unit: 'inches', dpi: 300, format: 'poster' },
         playerData: { name: 'Smith', number: '12' },
         brandTokens: { colors: { primary: '#000' } },
         outputPath: '/tmp/test.pdf',
@@ -74,9 +75,21 @@ describe('photoshop-client', () => {
         renderPrint({
           script: 'var doc = app.open(...);',
           playerData: { name: 'Smith' },
-          // missing brandTokens, outputPath
+          // missing printConfig, brandTokens, outputPath
         })
-      ).rejects.toThrow('Missing required render options');
+      ).rejects.toThrow('Missing required');
+    });
+
+    it('should throw on missing printConfig', async () => {
+      await expect(
+        renderPrint({
+          script: 'var doc = app.open(...);',
+          playerData: { name: 'Smith', number: '12' },
+          brandTokens: { colors: { primary: '#000' } },
+          outputPath: '/tmp/test.pdf',
+          // missing printConfig
+        })
+      ).rejects.toThrow('Missing required render option: printConfig');
     });
 
     it('should throw on API error', async () => {
@@ -89,6 +102,7 @@ describe('photoshop-client', () => {
       await expect(
         renderPrint({
           script: 'var doc = app.open(...);',
+          printConfig: { width: 16, height: 20, unit: 'inches', dpi: 300, format: 'poster' },
           playerData: { name: 'Smith', number: '12' },
           brandTokens: { colors: { primary: '#000' } },
           outputPath: '/tmp/test.pdf',
@@ -102,6 +116,7 @@ describe('photoshop-client', () => {
       await expect(
         renderPrint({
           script: 'var doc = app.open(...);',
+          printConfig: { width: 16, height: 20, unit: 'inches', dpi: 300, format: 'poster' },
           playerData: { name: 'Smith', number: '12' },
           brandTokens: { colors: { primary: '#000' } },
           outputPath: '/tmp/test.pdf',
@@ -122,8 +137,8 @@ describe('photoshop-client', () => {
       });
 
       const results = await renderBatch([
-        { script: 's1', playerData: { name: 'A' }, brandTokens: {}, outputPath: '/tmp/1.pdf' },
-        { script: 's2', playerData: { name: 'B' }, brandTokens: {}, outputPath: '/tmp/2.pdf' },
+        { script: 's1', printConfig: { width: 16, height: 20, dpi: 300 }, playerData: { name: 'A' }, brandTokens: {}, outputPath: '/tmp/1.pdf' },
+        { script: 's2', printConfig: { width: 2, height: 6, dpi: 300 }, playerData: { name: 'B' }, brandTokens: {}, outputPath: '/tmp/2.pdf' },
       ]);
 
       expect(results).toHaveLength(2);
@@ -139,8 +154,8 @@ describe('photoshop-client', () => {
       });
 
       const results = await renderBatch([
-        { script: 's1', playerData: { name: 'A' }, brandTokens: {}, outputPath: '/tmp/1.pdf' },
-        { script: 's2', playerData: { name: 'B' }, brandTokens: {}, outputPath: '/tmp/2.pdf' },
+        { script: 's1', printConfig: { width: 16, height: 20, dpi: 300 }, playerData: { name: 'A' }, brandTokens: {}, outputPath: '/tmp/1.pdf' },
+        { script: 's2', printConfig: { width: 2, height: 6, dpi: 300 }, playerData: { name: 'B' }, brandTokens: {}, outputPath: '/tmp/2.pdf' },
       ]);
 
       expect(results).toHaveLength(2);

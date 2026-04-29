@@ -1,0 +1,244 @@
+/**
+ * Tech Dynamic Brand — Trading Card Print Template (4×6 inches)
+ * Photoshop UXP 2.0 script for card rendering
+ * 
+ * Configuration (injected by pipeline):
+ * - printConfig: { width, height, unit, dpi, colorSpace, bleed }
+ * - playerData: player name, number, position, photo, stats, team
+ * - brandTokens: colors, fonts
+ * - outputPath: PDF output location
+ *
+ * Output: CMYK PDF, 300 DPI, trading card format
+ */
+
+'use strict';
+
+const { app, core, constants } = require('photoshop');
+const { storage } = require('uxp');
+
+// ─── Configuration injected by pipeline ────────────────────────
+const config = typeof __printConfig !== 'undefined' ? __printConfig : {};
+const p = typeof __playerData !== 'undefined' ? __playerData : null;
+const tokens = typeof __brandTokens !== 'undefined' ? __brandTokens : {};
+
+if (!config.width || !config.height) throw new Error('card.psjs: __printConfig missing dimensions');
+if (!p) throw new Error('card.psjs: __playerData not injected');
+
+// ─── Utility: Convert inches to pixels ─────────────────────────
+function inchesToPixels(inches, dpi) {
+  return Math.round(inches * dpi);
+}
+
+// ─── Utility: RGB color helper ──────────────────────────────────
+function rgbToColor(r, g, b) {
+  return {
+    red: Math.max(0, Math.min(255, r)),
+    green: Math.max(0, Math.min(255, g)),
+    blue: Math.max(0, Math.min(255, b)),
+  };
+}
+
+// ─── Utility: Hex to RGB ──────────────────────────────────────
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (result) {
+    return rgbToColor(
+      parseInt(result[1], 16),
+      parseInt(result[2], 16),
+      parseInt(result[3], 16)
+    );
+  }
+  return rgbToColor(255, 255, 255);
+}
+
+// ─── Document specs ───────────────────────────────────────────
+const DPI = config.dpi || 300;
+const DOC_WIDTH_PX = inchesToPixels(config.width, DPI);
+const DOC_HEIGHT_PX = inchesToPixels(config.height, DPI);
+const BORDER_WIDTH = Math.round(DPI / 30);  // ~0.03" border
+const SAFE_MARGIN_PX = inchesToPixels(0.15, DPI);
+
+// ─── Brand colors (tech theme) ──────────────────────────────────
+const COLORS = {
+  primary:    tokens.primary    || '#00D4FF',
+  accent:     tokens.accent     || '#FF006E',
+  secondary:  tokens.secondary  || '#64748B',
+  background: tokens.background || '#0F172A',
+  text:       tokens.text       || '#FFFFFF',
+};
+
+// ─── Main render function ─────────────────────────────────────
+async function buildCard() {
+  await core.executeAsModal(async () => {
+    // 1. Create new CMYK document (standard trading card: 4×6")
+    const doc = await app.documents.add({
+      width:      DOC_WIDTH_PX,
+      height:     DOC_HEIGHT_PX,
+      resolution: DPI,
+      mode:       constants.ColorMode.CMYK,
+      fill:       constants.DocumentFill.TRANSPARENT,
+      name:       `card_${config.width}x${config.height}_${p.slug}`,
+    });
+
+    // 2. Background (full dark)
+    const bgLayer = doc.layers.add();
+    bgLayer.name = 'Background';
+    
+    const bgBounds = [0, 0, DOC_WIDTH_PX, DOC_HEIGHT_PX];
+    await app.activeDocument.selection.select(bgBounds, constants.SelectionType.REPLACE, 0, false);
+    const bgColor = rgbToColor(15, 23, 42);
+    app.activeDocument.selection.fill(bgColor);
+    app.activeDocument.selection.deselect();
+
+    // 3. Tech border frame (accent color outline)
+    const borderLayer = doc.layers.add();
+    borderLayer.name = 'Border Frame';
+    
+    const borderBounds = [BORDER_WIDTH, BORDER_WIDTH, DOC_WIDTH_PX - BORDER_WIDTH, DOC_HEIGHT_PX - BORDER_WIDTH];
+    await app.activeDocument.selection.select(borderBounds, constants.SelectionType.REPLACE, 0, false);
+    const borderColor = hexToRgb(COLORS.primary);
+    app.activeDocument.selection.stroke(borderColor, BORDER_WIDTH);
+    app.activeDocument.selection.deselect();
+
+    // 4. Photo area (top 65% of card)
+    const photoAreaHeight = Math.round(DOC_HEIGHT_PX * 0.65);
+    const photoLayer = doc.layers.add();
+    photoLayer.name = 'Photo Area';
+    
+    const photoBounds = [
+      SAFE_MARGIN_PX + BORDER_WIDTH,
+      SAFE_MARGIN_PX + BORDER_WIDTH,
+      DOC_WIDTH_PX - SAFE_MARGIN_PX - BORDER_WIDTH,
+      SAFE_MARGIN_PX + BORDER_WIDTH + photoAreaHeight
+    ];
+    
+    await app.activeDocument.selection.select(photoBounds, constants.SelectionType.REPLACE, 0, false);
+    const photoColor = rgbToColor(30, 40, 70);
+    app.activeDocument.selection.fill(photoColor);
+    app.activeDocument.selection.deselect();
+
+    // Photo mask gradient (for text overlay on photo)
+    const photoMaskLayer = doc.layers.add();
+    photoMaskLayer.name = 'Photo Mask Gradient';
+    photoMaskLayer.blend = { opacity: 40 };
+    
+    const maskBounds = [
+      SAFE_MARGIN_PX + BORDER_WIDTH,
+      SAFE_MARGIN_PX + BORDER_WIDTH + (photoAreaHeight * 0.5),
+      DOC_WIDTH_PX - SAFE_MARGIN_PX - BORDER_WIDTH,
+      SAFE_MARGIN_PX + BORDER_WIDTH + photoAreaHeight
+    ];
+    await app.activeDocument.selection.select(maskBounds, constants.SelectionType.REPLACE, 0, false);
+    const maskColor = rgbToColor(15, 23, 42);
+    app.activeDocument.selection.fill(maskColor);
+    app.activeDocument.selection.deselect();
+
+    // 5. Stats section background (bottom 35%)
+    const statsAreaY = SAFE_MARGIN_PX + BORDER_WIDTH + photoAreaHeight;
+    const statsLayer = doc.layers.add();
+    statsLayer.name = 'Stats Background';
+    
+    const statsBounds = [
+      SAFE_MARGIN_PX + BORDER_WIDTH,
+      statsAreaY,
+      DOC_WIDTH_PX - SAFE_MARGIN_PX - BORDER_WIDTH,
+      DOC_HEIGHT_PX - SAFE_MARGIN_PX - BORDER_WIDTH
+    ];
+    await app.activeDocument.selection.select(statsBounds, constants.SelectionType.REPLACE, 0, false);
+    const statsColor = hexToRgb(COLORS.secondary);
+    app.activeDocument.selection.fill(statsColor);
+    app.activeDocument.selection.deselect();
+
+    // 6. Player name text (over photo area bottom)
+    const playerNameLayer = doc.layers.add();
+    playerNameLayer.name = 'Player Name';
+    playerNameLayer.kind = constants.LayerKind.TEXT;
+    playerNameLayer.text.contents = p.name || 'PLAYER NAME';
+
+    // 7. Player number (large, centered in stats area)
+    const numberLayer = doc.layers.add();
+    numberLayer.name = 'Player Number';
+    numberLayer.kind = constants.LayerKind.TEXT;
+    numberLayer.text.contents = `#${p.number || '00'}`;
+
+    // 8. Position label
+    if (p.position) {
+      const positionLayer = doc.layers.add();
+      positionLayer.name = 'Position Label';
+      positionLayer.kind = constants.LayerKind.TEXT;
+      positionLayer.text.contents = p.position.toUpperCase();
+    }
+
+    // 9. Stats display (if available)
+    if (p.stats && Object.keys(p.stats).length > 0) {
+      const statsDisplayLayer = doc.layers.add();
+      statsDisplayLayer.name = 'Stats Display';
+      statsDisplayLayer.kind = constants.LayerKind.TEXT;
+      
+      const topStats = Object.entries(p.stats)
+        .slice(0, 3)
+        .map(([key, val]) => `${key.toUpperCase()}: ${val}`)
+        .join(' | ');
+      
+      statsDisplayLayer.text.contents = topStats || 'STATS';
+    }
+
+    // 10. QR code placeholder (bottom-right, 0.5"×0.5")
+    const qrLayer = doc.layers.add();
+    qrLayer.name = 'QR Code Area';
+    
+    const qrSize = inchesToPixels(0.5, DPI);
+    const qrBounds = [
+      DOC_WIDTH_PX - SAFE_MARGIN_PX - BORDER_WIDTH - qrSize,
+      DOC_HEIGHT_PX - SAFE_MARGIN_PX - BORDER_WIDTH - qrSize,
+      DOC_WIDTH_PX - SAFE_MARGIN_PX - BORDER_WIDTH,
+      DOC_HEIGHT_PX - SAFE_MARGIN_PX - BORDER_WIDTH
+    ];
+    await app.activeDocument.selection.select(qrBounds, constants.SelectionType.REPLACE, 0, false);
+    const qrColor = rgbToColor(200, 200, 200);
+    app.activeDocument.selection.stroke(qrColor, 1);
+    app.activeDocument.selection.deselect();
+
+    // 11. Accent corner elements
+    const accentCorner = doc.layers.add();
+    accentCorner.name = 'Accent Corners';
+    
+    // Top-right accent
+    const accentSize = inchesToPixels(0.2, DPI);
+    const topRightBounds = [
+      DOC_WIDTH_PX - SAFE_MARGIN_PX - BORDER_WIDTH - accentSize,
+      SAFE_MARGIN_PX + BORDER_WIDTH,
+      DOC_WIDTH_PX - SAFE_MARGIN_PX - BORDER_WIDTH,
+      SAFE_MARGIN_PX + BORDER_WIDTH + accentSize
+    ];
+    await app.activeDocument.selection.select(topRightBounds, constants.SelectionType.REPLACE, 0, false);
+    const accentColor = hexToRgb(COLORS.accent);
+    app.activeDocument.selection.fill(accentColor);
+    app.activeDocument.selection.deselect();
+
+    // 12. Flatten and export as PDF
+    await doc.flatten();
+
+    const fileToken = await storage.localFileSystem.getFileForSaving(
+      `card_${p.slug}.pdf`,
+      { types: ['pdf'] }
+    );
+
+    if (fileToken) {
+      const pdfOptions = {
+        encoding: constants.PDFEncoding.ZIP,
+      };
+      await doc.exportFile(fileToken, constants.ExportFormat.PDF, pdfOptions);
+      console.log(`✅ Card rendered: ${config.width}x${config.height} @ ${DPI}dpi`);
+    }
+
+    await doc.close(constants.SaveOptions.NO);
+
+  }, { commandName: `Build Card ${config.width}x${config.height}` });
+}
+
+// Execute
+buildCard().catch(err => {
+  console.error('❌ Card build failed:', err.message);
+  process.exit(1);
+});

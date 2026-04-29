@@ -1,0 +1,233 @@
+/**
+ * Tech Dynamic Brand — Vertical Banner Print Template (2×6 inches)
+ * Photoshop UXP 2.0 script for banner rendering
+ * 
+ * Configuration (injected by pipeline):
+ * - printConfig: { width, height, unit, dpi, colorSpace, bleed }
+ * - playerData: player name, number, position, photo, stats, team
+ * - brandTokens: colors, fonts
+ * - outputPath: PDF output location
+ *
+ * Output: CMYK PDF, 300 DPI, vertical banner for team displays
+ */
+
+'use strict';
+
+const { app, core, constants } = require('photoshop');
+const { storage } = require('uxp');
+
+// ─── Configuration injected by pipeline ────────────────────────
+const config = typeof __printConfig !== 'undefined' ? __printConfig : {};
+const p = typeof __playerData !== 'undefined' ? __playerData : null;
+const tokens = typeof __brandTokens !== 'undefined' ? __brandTokens : {};
+
+if (!config.width || !config.height) throw new Error('banner.psjs: __printConfig missing dimensions');
+if (!p) throw new Error('banner.psjs: __playerData not injected');
+
+// ─── Utility: Convert inches to pixels ─────────────────────────
+function inchesToPixels(inches, dpi) {
+  return Math.round(inches * dpi);
+}
+
+// ─── Utility: RGB color helper ──────────────────────────────────
+function rgbToColor(r, g, b) {
+  return {
+    red: Math.max(0, Math.min(255, r)),
+    green: Math.max(0, Math.min(255, g)),
+    blue: Math.max(0, Math.min(255, b)),
+  };
+}
+
+// ─── Utility: Hex to RGB ──────────────────────────────────────
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (result) {
+    return rgbToColor(
+      parseInt(result[1], 16),
+      parseInt(result[2], 16),
+      parseInt(result[3], 16)
+    );
+  }
+  return rgbToColor(255, 255, 255);
+}
+
+// ─── Document specs ───────────────────────────────────────────
+const DPI = config.dpi || 300;
+const DOC_WIDTH_PX = inchesToPixels(config.width, DPI);
+const DOC_HEIGHT_PX = inchesToPixels(config.height, DPI);
+const STRIPE_WIDTH = inchesToPixels(0.15, DPI);
+const SAFE_MARGIN_PX = inchesToPixels(0.15, DPI);
+
+// ─── Brand colors (tech theme) ──────────────────────────────────
+const COLORS = {
+  primary:    tokens.primary    || '#00D4FF',
+  accent:     tokens.accent     || '#FF006E',
+  secondary:  tokens.secondary  || '#64748B',
+  background: tokens.background || '#0F172A',
+  text:       tokens.text       || '#FFFFFF',
+};
+
+// ─── Main render function ─────────────────────────────────────
+async function buildBanner() {
+  await core.executeAsModal(async () => {
+    // 1. Create new CMYK document (narrow vertical banner)
+    const doc = await app.documents.add({
+      width:      DOC_WIDTH_PX,
+      height:     DOC_HEIGHT_PX,
+      resolution: DPI,
+      mode:       constants.ColorMode.CMYK,
+      fill:       constants.DocumentFill.TRANSPARENT,
+      name:       `banner_${config.width}x${config.height}_${p.slug}`,
+    });
+
+    // 2. Background (full dark)
+    const bgLayer = doc.layers.add();
+    bgLayer.name = 'Background';
+    
+    const bgBounds = [0, 0, DOC_WIDTH_PX, DOC_HEIGHT_PX];
+    await app.activeDocument.selection.select(bgBounds, constants.SelectionType.REPLACE, 0, false);
+    const bgColor = rgbToColor(15, 23, 42);
+    app.activeDocument.selection.fill(bgColor);
+    app.activeDocument.selection.deselect();
+
+    // 3. Left accent stripe (primary color vertical line)
+    const stripeLayer = doc.layers.add();
+    stripeLayer.name = 'Accent Stripe';
+    
+    const stripeBounds = [0, 0, STRIPE_WIDTH, DOC_HEIGHT_PX];
+    await app.activeDocument.selection.select(stripeBounds, constants.SelectionType.REPLACE, 0, false);
+    const stripeColor = hexToRgb(COLORS.primary);
+    app.activeDocument.selection.fill(stripeColor);
+    app.activeDocument.selection.deselect();
+
+    // 4. Top section: Team logo + name (first 1.5")
+    const topSectionHeight = inchesToPixels(1.5, DPI);
+    const logoLayer = doc.layers.add();
+    logoLayer.name = 'Team Logo Area';
+    
+    // Logo placeholder rectangle
+    const logoBounds = [
+      SAFE_MARGIN_PX + STRIPE_WIDTH, 
+      SAFE_MARGIN_PX, 
+      DOC_WIDTH_PX - SAFE_MARGIN_PX, 
+      SAFE_MARGIN_PX + inchesToPixels(0.6, DPI)
+    ];
+    await app.activeDocument.selection.select(logoBounds, constants.SelectionType.REPLACE, 0, false);
+    const logoBorderColor = hexToRgb(COLORS.primary);
+    app.activeDocument.selection.stroke(logoBorderColor, 1);
+    app.activeDocument.selection.deselect();
+
+    // Team name text
+    const teamNameLayer = doc.layers.add();
+    teamNameLayer.name = 'Team Name';
+    teamNameLayer.kind = constants.LayerKind.TEXT;
+    teamNameLayer.text.contents = p.team?.name || 'TEAM';
+
+    // 5. Middle section: Player info (1.5" to 4.5")
+    const playerInfoLayer = doc.layers.add();
+    playerInfoLayer.name = 'Player Info Background';
+    
+    const infoBounds = [
+      STRIPE_WIDTH,
+      topSectionHeight,
+      DOC_WIDTH_PX,
+      topSectionHeight + inchesToPixels(3.0, DPI)
+    ];
+    await app.activeDocument.selection.select(infoBounds, constants.SelectionType.REPLACE, 0, false);
+    const infoColor = rgbToColor(30, 40, 70);
+    app.activeDocument.selection.fill(infoColor);
+    app.activeDocument.selection.deselect();
+
+    // Player name text
+    const playerNameLayer = doc.layers.add();
+    playerNameLayer.name = 'Player Name';
+    playerNameLayer.kind = constants.LayerKind.TEXT;
+    playerNameLayer.text.contents = p.name || 'PLAYER';
+
+    // Player number
+    const numberLayer = doc.layers.add();
+    numberLayer.name = 'Player Number';
+    numberLayer.kind = constants.LayerKind.TEXT;
+    numberLayer.text.contents = `#${p.number || '00'}`;
+
+    // Player position
+    if (p.position) {
+      const positionLayer = doc.layers.add();
+      positionLayer.name = 'Position';
+      positionLayer.kind = constants.LayerKind.TEXT;
+      positionLayer.text.contents = p.position.toUpperCase();
+    }
+
+    // 6. Bottom section: Stats (if available)
+    if (p.stats && Object.keys(p.stats).length > 0) {
+      const bottomSectionY = topSectionHeight + inchesToPixels(3.0, DPI);
+      
+      // Stats background
+      const statsBackgroundLayer = doc.layers.add();
+      statsBackgroundLayer.name = 'Stats Background';
+      
+      const statsBounds = [
+        STRIPE_WIDTH,
+        bottomSectionY,
+        DOC_WIDTH_PX,
+        DOC_HEIGHT_PX
+      ];
+      await app.activeDocument.selection.select(statsBounds, constants.SelectionType.REPLACE, 0, false);
+      const statsColor = hexToRgb(COLORS.secondary);
+      app.activeDocument.selection.fill(statsColor);
+      app.activeDocument.selection.deselect();
+
+      // Stats text
+      const statsLayer = doc.layers.add();
+      statsLayer.name = 'Stats';
+      statsLayer.kind = constants.LayerKind.TEXT;
+      
+      const topStats = Object.entries(p.stats)
+        .slice(0, 2)
+        .map(([key, val]) => `${key.toUpperCase()}: ${val}`)
+        .join('\n');
+      
+      statsLayer.text.contents = topStats || 'STATS';
+    }
+
+    // 7. Accent element (top-right corner)
+    const accentLayer = doc.layers.add();
+    accentLayer.name = 'Accent Element';
+    
+    const accentBounds = [
+      DOC_WIDTH_PX - inchesToPixels(0.3, DPI),
+      0,
+      DOC_WIDTH_PX,
+      inchesToPixels(0.3, DPI)
+    ];
+    await app.activeDocument.selection.select(accentBounds, constants.SelectionType.REPLACE, 0, false);
+    const accentColor = hexToRgb(COLORS.accent);
+    app.activeDocument.selection.fill(accentColor);
+    app.activeDocument.selection.deselect();
+
+    // 8. Flatten and export as PDF
+    await doc.flatten();
+
+    const fileToken = await storage.localFileSystem.getFileForSaving(
+      `banner_${p.slug}.pdf`,
+      { types: ['pdf'] }
+    );
+
+    if (fileToken) {
+      const pdfOptions = {
+        encoding: constants.PDFEncoding.ZIP,
+      };
+      await doc.exportFile(fileToken, constants.ExportFormat.PDF, pdfOptions);
+      console.log(`✅ Banner rendered: ${config.width}x${config.height} @ ${DPI}dpi`);
+    }
+
+    await doc.close(constants.SaveOptions.NO);
+
+  }, { commandName: `Build Banner ${config.width}x${config.height}` });
+}
+
+// Execute
+buildBanner().catch(err => {
+  console.error('❌ Banner build failed:', err.message);
+  process.exit(1);
+});

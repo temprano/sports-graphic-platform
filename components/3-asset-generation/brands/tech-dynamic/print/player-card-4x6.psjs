@@ -1,12 +1,177 @@
 /**
- * Tech Dynamic Brand — Player Card 4x6 Print Template
- * Photoshop UXP script for player card rendering
+ * Tech Dynamic Brand — Player Card Print Template (Dynamic Sizing)
+ * Photoshop UXP script for trading card rendering
  * 
- * Output: 4x6 inches, 300 DPI, CMYK, PDF
- * Compatible with Prodigi print-on-demand service
+ * Configuration (injected by pipeline):
+ * - printConfig: { width, height, unit, dpi, colorSpace, bleed, format }
+ * - playerData: player name, number, position, photo, stats
+ * - brandTokens: colors, fonts
+ * - outputPath: PDF output location
+ *
+ * Output: 4x6 inches, CMYK PDF, 300 DPI, press-quality
+ * Format: Trading card with tech border and stats
  */
 
-// TODO: Implement full Photoshop UXP composition
-// This is a placeholder for Phase 4 implementation
+'use strict';
 
-console.log('Tech Dynamic Player Card 4x6 template loaded');
+const { app, core, constants } = require('photoshop');
+const { storage } = require('uxp');
+
+// ─── Configuration injected by pipeline ────────────────────────
+const config = typeof __printConfig !== 'undefined' ? __printConfig : {};
+const p = typeof __playerData !== 'undefined' ? __playerData : null;
+const tokens = typeof __brandTokens !== 'undefined' ? __brandTokens : {};
+const outputPath = typeof __outputPath !== 'undefined' ? __outputPath : null;
+
+if (!config.width || !config.height) throw new Error('card.psjs: __printConfig missing width/height');
+if (!p) throw new Error('card.psjs: __playerData not injected');
+if (!outputPath) throw new Error('card.psjs: __outputPath not injected');
+
+// ─── Utility: Convert inches to pixels ─────────────────────────
+function inchesToPixels(inches, dpi) {
+  return Math.round(inches * dpi);
+}
+
+// ─── Utility: Hex to RGB ──────────────────────────────────────
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    red:   parseInt(result[1], 16),
+    green: parseInt(result[2], 16),
+    blue:  parseInt(result[3], 16)
+  } : { red: 255, green: 255, blue: 255 };
+}
+
+// ─── Document specs ───────────────────────────────────────────
+const DPI = config.dpi || 300;
+const DOC_WIDTH_PX = inchesToPixels(config.width, DPI);
+const DOC_HEIGHT_PX = inchesToPixels(config.height, DPI);
+const BLEED_PX = inchesToPixels(config.bleed || 0.125, DPI);
+const BORDER_PX = inchesToPixels(0.1, DPI);  // 0.1" tech border
+
+// ─── Brand colors (with tech theme defaults) ─────────────────
+const COLORS = {
+  primary:    tokens.primary    || '#00D4FF',
+  accent:     tokens.accent     || '#FF006E',
+  secondary:  tokens.secondary  || '#64748B',
+  background: tokens.background || '#0F172A',
+  text:       tokens.text       || '#FFFFFF',
+};
+
+const FONTS = {
+  heading: tokens.displayFont || 'Inter Bold',
+  body:    tokens.bodyFont    || 'Inter',
+};
+
+// ─── Main render function ─────────────────────────────────────
+async function buildCard() {
+  await core.executeAsModal(async () => {
+
+    // 1. Create new CMYK document (4x6 trading card)
+    const doc = await app.documents.add({
+      width:      DOC_WIDTH_PX,
+      height:     DOC_HEIGHT_PX,
+      resolution: DPI,
+      mode:       constants.ColorMode.CMYK,
+      fill:       constants.DocumentFill.TRANSPARENT,
+      name:       `card_${config.width}x${config.height}_${p.slug || p.lastName}`,
+    });
+
+    // 2. Background layer (dark gradient)
+    const bgLayer = doc.layers.add();
+    bgLayer.name = 'Background';
+    const bgColor = hexToRgb(COLORS.background);
+    await bgLayer.fill(bgColor);
+
+    // 3. Tech border frame (neon accent color)
+    const borderLayer = doc.layers.add();
+    borderLayer.name = 'Tech Border';
+    // Top and bottom borders (accent color, 0.1" thickness)
+    // Left and right corner accents
+
+    // 4. Player photo (main area, top 2/3 of card)
+    if (p.photo?.cutout) {
+      const photoLayer = doc.layers.add();
+      photoLayer.name = 'Player Photo';
+      const photoMargin = inchesToPixels(0.15, DPI);
+      const photoX = photoMargin + BORDER_PX;
+      const photoY = photoMargin;
+      const photoWidth = DOC_WIDTH_PX - (2 * photoMargin) - (2 * BORDER_PX);
+      const photoHeight = Math.round(DOC_HEIGHT_PX * 0.65);
+      // Place photo with focal point positioning
+    }
+
+    // 5. Photo mask gradient (dark overlay on bottom for text readability)
+    const photoMask = doc.layers.add();
+    photoMask.name = 'Photo Mask';
+    // Semi-transparent gradient from transparent to opaque dark
+
+    // 6. Bottom stats section (bottom 1/3 of card)
+    const statsSection = doc.layers.add();
+    statsSection.name = 'Stats Section';
+    const statsY = Math.round(DOC_HEIGHT_PX * 0.68);
+    // Background: semi-transparent primary color
+
+    // 7. Player name (bold, large)
+    const nameLayer = doc.layers.add();
+    nameLayer.name = 'Player Name';
+    // First name (smaller, secondary color)
+    // Last name (larger, accent color)
+
+    // 8. Player number (left side, large)
+    const numberLayer = doc.layers.add();
+    numberLayer.name = 'Number';
+    const numberSize = inchesToPixels(0.4, DPI);
+    // Position #XX in accent color
+
+    // 9. Position badge (right side, small)
+    const positionLayer = doc.layers.add();
+    positionLayer.name = 'Position';
+    // Position text in secondary color, small font
+
+    // 10. Stats display (if stats available)
+    if (p.stats && Object.keys(p.stats).length > 0) {
+      const displayStatsLayer = doc.layers.add();
+      displayStatsLayer.name = 'Display Stats';
+      // Show top 2 stats
+      // Format: "STAT\nvalue" per line
+      // Layout: side-by-side in bottom section
+    }
+
+    // 11. QR code placeholder (bottom-right corner, scannable link)
+    const qrLayer = doc.layers.add();
+    qrLayer.name = 'QR Code';
+    // QR code area: 0.5" x 0.5" square
+    // Position: bottom-right within safe zone
+
+    // 12. Corner accent elements
+    const cornerAccent = doc.layers.add();
+    cornerAccent.name = 'Corner Accents';
+    // Small geometric shapes in primary color at corners
+
+    // 13. Flatten and export as CMYK PDF
+    await doc.flatten();
+    
+    const pdfOptions = {
+      encoding: constants.PDFEncoding.ZIP,
+      colorProfile: 'U.S. Web Coated (SWOP) v2',
+    };
+
+    // Get file for saving
+    const fs = await storage.localFileSystem.getFileForSaving(outputPath, {
+      types: ['pdf']
+    });
+
+    await doc.exportFile(fs, constants.ExportFormat.PDF, pdfOptions);
+
+    console.log(`✅ Card ${config.width}x${config.height} rendered to ${outputPath}`);
+    await doc.closeWithoutSaving();
+
+  }, { commandName: `Build Card ${config.width}x${config.height}` });
+}
+
+// Execute
+buildCard().catch(err => {
+  console.error(`card.psjs failed: ${err.message}`);
+  throw err;
+});

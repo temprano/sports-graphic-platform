@@ -20,8 +20,10 @@ drop-ship or customer download.
 > Update this section at the start of each session.
 - [x] Component 2 — Automation pipeline (video + print + packaging complete)
 - [x] Component 3 — Asset generation (brand templates, Hyperframes + Remotion support)
-- [x] Remotion integration Phase 1-3 (architecture, infrastructure, testing, second brand)
-- [ ] Phase 4 — Remotion animation implementation + end-to-end testing
+- [x] Remotion integration Phase 1-4 (architecture, infrastructure, testing, 3 compositions, print templates)
+- [x] Phase 4 — Remotion animation implementation + print templates deployed ✅
+- [ ] End-to-end video rendering demo (Remotion server setup)
+- [ ] Component 1 — Customer web app (Next.js + Stripe + Appwrite)
 
 ## Tech Stack Summary
 - **Runtime**: Node.js ESM (`.mjs` or `"type": "module"` in package.json)

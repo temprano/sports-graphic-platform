@@ -83,6 +83,22 @@ export async function run(data) {
     for (const deliverable of printDeliverables) {
       const { format } = deliverable;
 
+      // Look up print configuration from brand.json
+      const printConfig = brandData.print?.[format];
+      if (!printConfig) {
+        logger.error('Print configuration not found in brand', {
+          orderId,
+          format,
+        });
+        failedCount++;
+        prints.push({
+          format,
+          status: 'failed',
+          error: `Print format '${format}' not configured in brand`,
+        });
+        continue;
+      }
+
       // For each player
       for (const player of teamData.players) {
         const { id: playerId, slug: playerSlug, consentLog } = player;
@@ -91,13 +107,19 @@ export async function run(data) {
         const hasAiMotionConsent = checkConsent({flags: consentLog}, 'aiMotion');
 
         try {
+          // Determine which template script to use (based on format type or script path)
+          let scriptName = printConfig.script;
+          if (!scriptName) {
+            throw new Error(`Print config for '${format}' missing script field`);
+          }
+
           // Load print template script
           let templateScript;
           try {
-            const scriptPath = `${printTemplatesPath}/${format}.psjs`;
+            const scriptPath = `${printTemplatesPath}/${scriptName}`;
             templateScript = readFileSync(scriptPath, 'utf8');
           } catch (error) {
-            throw new Error(`Failed to load template script for ${format}: ${error.message}`);
+            throw new Error(`Failed to load template script '${scriptName}': ${error.message}`);
           }
 
           // Prepare player data for injection
@@ -109,6 +131,11 @@ export async function run(data) {
             position: player.position,
             photo: player.photo,
             stats: player.stats,
+            team: {
+              name: teamData.team,
+              sport: teamData.sport,
+              logo: teamData.logo,
+            },
             useAiMotion: hasAiMotionConsent,
           };
 
@@ -116,16 +143,18 @@ export async function run(data) {
           const brandTokens = {
             colors: teamData.colors,
             fonts: teamData.fonts,
-            logo: teamData.logo,
-            team: teamData.team,
+            primary: teamData.colors?.primary,
+            displayFont: teamData.fonts?.display,
+            bodyFont: teamData.fonts?.body,
           };
 
           // Output path
           const outputPath = `${outputDir}/print/${format}/${playerSlug}.pdf`;
 
-          // Render print asset
+          // Render print asset with dynamic sizing config
           const result = await renderPrint({
             script: templateScript,
+            printConfig,
             playerData,
             brandTokens,
             outputPath,

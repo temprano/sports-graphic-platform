@@ -1,12 +1,17 @@
 {
   "schemaVersion": "1.0",
   "id": "tech-dynamic",
-  "name": "Tech Dynamic",
-  "active": true,
+  "name": "Tech Dynamic Brand",
   "renderEngine": "remotion",
-  "tokenSchema": {
-    "colors": ["primary", "secondary", "accent", "background", "text"],
-    "fonts": ["displayFont", "bodyFont"]
+  "colors": {
+    "primary": "#00D4FF",
+    "accent": "#FF006E",
+    "secondary": "#64748B",
+    "background": "#0F172A"
+  },
+  "fonts": {
+    "display": "Inter, sans-serif",
+    "body": "Inter, sans-serif"
   },
   "compositions": {
     "player-intro-full": {
@@ -15,7 +20,7 @@
       "height": 1080,
       "fps": 30,
       "duration": 30,
-      "description": "30-second full HD player introduction with tech animations"
+      "description": "30-second full player showcase"
     },
     "player-intro-short": {
       "compositionId": "PlayerIntroShort",
@@ -23,7 +28,7 @@
       "height": 1920,
       "fps": 30,
       "duration": 8,
-      "description": "8-second vertical player introduction for social media"
+      "description": "8-second short-form player video"
     },
     "team-banner": {
       "compositionId": "TeamBanner",
@@ -31,7 +36,7 @@
       "height": 1080,
       "fps": 30,
       "duration": 15,
-      "description": "15-second team roster banner with tech elements"
+      "description": "15-second team roster showcase"
     }
   },
   "print": {
@@ -43,8 +48,7 @@
       "unit": "inches",
       "dpi": 300,
       "colorSpace": "CMYK",
-      "bleed": 0.125,
-      "description": "16x20 inch poster with team photo and stats"
+      "bleed": 0.125
     },
     "banner-2x6": {
       "script": "banner.psjs",
@@ -54,8 +58,7 @@
       "unit": "inches",
       "dpi": 300,
       "colorSpace": "CMYK",
-      "bleed": 0.125,
-      "description": "2x6 inch team banner for fundraising"
+      "bleed": 0.125
     },
     "player-card-4x6": {
       "script": "card.psjs",
@@ -65,20 +68,7 @@
       "unit": "inches",
       "dpi": 300,
       "colorSpace": "CMYK",
-      "bleed": 0.125,
-      "description": "4x6 inch player trading card with tech border"
-    }
-  },
-  "outputSpecs": {
-    "video": {
-      "codec": "h264",
-      "bitrate": "8000k",
-      "format": "mp4"
-    },
-    "print": {
-      "format": "pdf",
-      "colorSpace": "CMYK",
-      "minDpi": 300
+      "bleed": 0.125
     }
   }
 }

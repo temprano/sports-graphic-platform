@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0",
+  "orderId": "test-order-001",
+  "team": "Sample Hawks",
+  "sport": "basketball",
+  "colors": {
+    "primary": "#1e3a8a",
+    "accent": "#3b82f6",
+    "secondary": "#64748b",
+    "background": "#0f172a"
+  },
+  "fonts": {
+    "display": "Inter, sans-serif",
+    "body": "Inter, sans-serif"
+  },
+  "logo": {
+    "type": "text",
+    "content": "Hawks"
+  },
+  "players": [
+    {
+      "id": "player-001",
+      "slug": "jordan-smith",
+      "name": "Jordan Smith",
+      "firstName": "Jordan",
+      "lastName": "Smith",
+      "number": "23",
+      "position": "Shooting Guard",
+      "photo": {
+        "cutout": "/test/jordan-smith.png",
+        "original": "/test/jordan-smith-original.png",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.4
+        }
+      },
+      "stats": {
+        "pointsPerGame": "18.5",
+        "assists": "4.2",
+        "rebounds": "5.1"
+      },
+      "consentLog": {
+        "aiMotion": true,
+        "timestamp": "2026-04-29T00:00:00Z"
+      }
+    },
+    {
+      "id": "player-002",
+      "slug": "marcus-johnson",
+      "name": "Marcus Johnson",
+      "firstName": "Marcus",
+      "lastName": "Johnson",
+      "number": "5",
+      "position": "Point Guard",
+      "photo": {
+        "cutout": "/test/marcus-johnson.png",
+        "original": "/test/marcus-johnson-original.png",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.45
+        }
+      },
+      "stats": {
+        "pointsPerGame": "12.3",
+        "assists": "8.1",
+        "rebounds": "2.5"
+      },
+      "consentLog": {
+        "aiMotion": false,
+        "timestamp": "2026-04-29T00:00:00Z"
+      }
+    }
+  ],
+  "deliverables": [
+    {
+      "type": "video",
+      "format": "player-intro-full",
+      "description": "30-second player showcase video"
+    },
+    {
+      "type": "video",
+      "format": "player-intro-short",
+      "description": "8-second short-form player video"
+    },
+    {
+      "type": "video",
+      "format": "team-banner",
+      "description": "15-second team roster showcase"
+    }
+  ]
+}
