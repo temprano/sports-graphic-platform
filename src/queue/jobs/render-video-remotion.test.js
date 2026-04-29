@@ -72,6 +72,14 @@ describe('render-video job with Remotion engine', () => {
       .mockReturnValueOnce('<html>template</html>');
 
     hyperframes.isReachable.mockResolvedValue(true);
+    // Mock remotion.renderComposition to return successful result
+    remotion.renderComposition.mockResolvedValue({
+      outputPath: '/output/tech_player_player-intro-short.mp4',
+      width: 1080,
+      height: 1920,
+      duration: 8,
+      fileSize: 1200000,
+    });
 
     const result = await run({
       orderId: 'ord_remotion_001',
@@ -81,11 +89,11 @@ describe('render-video job with Remotion engine', () => {
       outputDir: '/output',
     });
 
-    // Should fail because renderWithRemotion throws "not yet implemented"
-    // This validates the engine routing was attempted
-    expect(result.failedCount).toBe(1);
-    expect(result.videos[0].status).toBe('failed');
-    expect(result.videos[0].error).toContain('not yet implemented');
+    // Should succeed with Remotion rendering
+    expect(result.renderedCount).toBe(1);
+    expect(result.failedCount).toBe(0);
+    expect(remotion.renderComposition).toHaveBeenCalled();
+    expect(result.videos[0].status).toBe('rendered');
   });
 
   it('should preserve tech-dynamic brand configuration', async () => {

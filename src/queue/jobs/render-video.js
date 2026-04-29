@@ -19,6 +19,7 @@
 import { readFileSync } from 'fs';
 import { checkConsent } from '../../pipeline/consent/check-consent.js';
 import { renderComposition, isReachable } from '../../pipeline/hyperframes-client.js';
+import { renderComposition as renderRemotionComposition } from '../../pipeline/remotion-client.js';
 import { logger } from '../../lib/logger.js';
 
 /**
@@ -276,13 +277,30 @@ async function renderWithHyperframes(templateData, compositionDef, outputPath) {
 /**
  * Render with Remotion engine (React JSX compositions)
  * @internal
- * @throws {Error} when remotion-client.js is not yet implemented
  */
 async function renderWithRemotion(templateData, compositionDef, outputPath) {
-  // TODO: Import remotion-client when ready
-  // const { renderComposition: renderRemotionComposition } = await import('../../pipeline/remotion-client.js');
-  // return renderRemotionComposition({ ... });
+  // Extract compositionId from the composition definition
+  // compositionDef contains: { compositionId, width, height, fps, duration, description }
+  const compositionId = compositionDef.compositionId;
   
-  // For now, throw a descriptive error
-  throw new Error('Remotion rendering not yet implemented. Coming in Phase 3.');
+  if (!compositionId) {
+    throw new Error('Composition definition missing compositionId field required for Remotion');
+  }
+
+  // Map template data to Remotion component props
+  // templateData.data already contains: { player, team, brand, flags }
+  const props = templateData.data;
+
+  // Call remotion-client to render the composition
+  const result = await renderRemotionComposition({
+    compositionId,
+    data: props,
+    width: compositionDef.width,
+    height: compositionDef.height,
+    fps: compositionDef.fps || 30,
+    duration: compositionDef.duration,
+    outputPath,
+  });
+
+  return result;
 }

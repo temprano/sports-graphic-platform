@@ -332,7 +332,7 @@ describe('render-video job', () => {
       schemaVersion: '1.0',
       id: 'tech-dynamic',
       renderEngine: 'remotion',
-      compositions: { 'player-intro-full': { compositionId: 'player-intro-full', duration: 30, width: 1920, height: 1080, fps: 30 } },
+      compositions: { 'player-intro-full': { compositionId: 'PlayerIntroFull', duration: 30, width: 1920, height: 1080, fps: 30 } },
     };
 
     fs.readFileSync
@@ -341,8 +341,14 @@ describe('render-video job', () => {
       .mockReturnValueOnce('<html>template</html>');
 
     hyperframes.isReachable.mockResolvedValue(true);
-    // Mock renderWithRemotion to throw "not implemented" (Phase 3 TODO)
-    // In real Phase 4, this would call remotion.renderComposition
+    // Mock remotion.renderComposition to return successful result
+    remotion.renderComposition.mockResolvedValue({
+      outputPath: '/output/jordan_player-intro-full.mp4',
+      width: 1920,
+      height: 1080,
+      duration: 30,
+      fileSize: 2500000,
+    });
     
     const result = await run({
       orderId: 'ord_001',
@@ -352,11 +358,20 @@ describe('render-video job', () => {
       outputDir: '/output',
     });
 
-    // Current implementation throws "not implemented" for Remotion, so it fails
-    // This validates the routing decision was made (engine dispatch attempted)
-    expect(result.failedCount).toBe(1);
-    expect(result.videos[0].status).toBe('failed');
-    expect(result.videos[0].error).toContain('not yet implemented');
+    // Verify Remotion rendering was called and succeeded
+    expect(result.renderedCount).toBe(1);
+    expect(result.failedCount).toBe(0);
+    expect(remotion.renderComposition).toHaveBeenCalled();
+    expect(remotion.renderComposition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        compositionId: 'PlayerIntroFull',
+        width: 1920,
+        height: 1080,
+        duration: 30,
+      })
+    );
+    expect(result.videos[0].status).toBe('rendered');
+    expect(result.videos[0].outputPath).toBe('/output/jordan_player-intro-full.mp4');
   });
 
   it('should render with useAiMotion flag set based on consent', async () => {
