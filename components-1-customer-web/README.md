@@ -2,6 +2,116 @@
 
 Sports Graphics Platform — Customer-facing Next.js application for team registration, order management, and parent store.
 
+## Phase 0: Photo Upload Implementation ✅
+
+Complete multi-step order creation with ML-powered photo validation.
+
+### What's Implemented
+
+**Components:**
+- `PhotoUploadFlow` — Main photo upload container with state management
+- `PoseBox` — Individual pose upload with drag-drop, preview, validation status
+- `PlayerCard` — Player grouping with header
+- `PoseBoxRow` — Responsive grid layout (1-col mobile, 3-col desktop)
+- `ProgressBar` — Visual progress indicator
+- `ActionBar` — Back/Continue buttons with completion gating
+- `OrderCreationForm` — 4-step order creation wizard (Brand → Players → Photos → Review)
+
+**Utilities:**
+- `transformers-client.ts` — Client-side ML pose validation using PoseNet
+  - Automatic pose angle detection (front, left, right)
+  - Confidence scoring (0-100%)
+  - Graceful fallback if model unavailable
+
+**Hooks:**
+- `usePhotoUpload` — Photo upload state and validation management
+- `useOrder` — Global order context access
+
+**Context:**
+- `OrderContext` — Global order state with localStorage persistence
+
+**API:**
+- `POST /api/orders/create` — Order creation endpoint (skeleton)
+
+**Pages:**
+- `/team/orders/new` — Multi-step order creation page
+
+**Types:**
+- `Pose`, `Player`, `PhotoUpload`, `PhotoUploadState`, `OrderData`
+
+### Features
+
+✅ Photo upload with drag-drop
+✅ ML-powered pose validation
+✅ Multi-step form workflow
+✅ localStorage persistence and recovery
+✅ Responsive design (mobile/desktop)
+✅ Dark theme with Tailwind CSS
+✅ Type-safe React/TypeScript (strict mode)
+✅ Graceful error handling
+✅ Visual status indicators
+✅ Photo preview with hover actions
+✅ File size validation (10MB max)
+✅ User override option for invalid poses
+
+### Directory Structure
+
+```
+components-1-customer-web/
+├── app/
+│   ├── api/orders/create/route.ts
+│   └── team/orders/new/page.tsx
+├── components/team/
+│   ├── order-creation/
+│   │   ├── OrderCreationForm.tsx
+│   │   └── index.ts
+│   └── photo-upload/
+│       ├── PhotoUploadFlow.tsx
+│       ├── PoseBox.tsx
+│       ├── PlayerCard.tsx
+│       ├── PoseBoxRow.tsx
+│       ├── ProgressBar.tsx
+│       ├── ActionBar.tsx
+│       └── index.ts
+├── lib/
+│   ├── types/order.ts
+│   ├── context/OrderContext.tsx
+│   ├── hooks/
+│   │   ├── usePhotoUpload.ts
+│   │   └── index.ts
+│   └── pose-validation/transformers-client.ts
+└── package.json (added @xenova/transformers)
+```
+
+### Getting Started
+
+```bash
+cd components-1-customer-web
+
+# Check npm install status
+npm list @xenova/transformers
+
+# If not installed yet:
+npm install
+
+# Run development server
+npm run dev
+```
+
+Visit `http://localhost:3000/team/orders/new` to see the multi-step form.
+
+### Next Steps
+
+1. **Appwrite Integration** — Connect database, storage, authentication
+2. **Stripe Integration** — Two-stage payment (deposit + balance)
+3. **Order Management** — Detail page, tracking, proof review
+4. **Testing** — Unit tests, E2E tests, sample images
+5. **Team Management** — Team creation, player roster, brand selection
+
+---
+
+## Original Features
+
 ## Features
 
 - **Landing Page** with GSAP scroll animations
