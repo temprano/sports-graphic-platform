@@ -25,6 +25,15 @@
     }
   },
 
+  "lighting": {
+    "description": "IC-Light configuration for player photo relighting after background removal",
+    "enabled": true,
+    "direction": 45,
+    "intensity": 0.8,
+    "colorTemperature": 5500,
+    "notes": "direction: 0=front, 90=left, 180=back, 270=right; intensity: 0.1-1.0; colorTemperature: 2700-6500K"
+  },
+
   "compositions": {
     "player-intro-full": {
       "file": "compositions/player-intro-full.html",

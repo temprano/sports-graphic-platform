@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0",
+  "description": "Default IC-Light settings for all brands. Can be overridden per brand in brand.json.",
+  "lighting": {
+    "direction": {
+      "label": "Light direction (azimuth in degrees, 0-360)",
+      "value": 45,
+      "min": 0,
+      "max": 360,
+      "description": "0=front, 90=left, 180=back, 270=right"
+    },
+    "intensity": {
+      "label": "Light intensity (0-1 scale)",
+      "value": 0.8,
+      "min": 0.1,
+      "max": 1.0,
+      "description": "0.1=very subtle, 0.8=strong, 1.0=very intense"
+    },
+    "colorTemperature": {
+      "label": "Light color temperature (Kelvin)",
+      "value": 5500,
+      "min": 2700,
+      "max": 6500,
+      "description": "2700K=warm (sunset), 5500K=daylight, 6500K=cool (bluish)"
+    }
+  },
+  "presets": {
+    "soft_front": {
+      "name": "Soft Front Lighting",
+      "description": "Gentle, flattering light from front-left",
+      "lighting": {
+        "direction": { "value": 30 },
+        "intensity": { "value": 0.6 },
+        "colorTemperature": { "value": 5200 }
+      }
+    },
+    "dramatic_side": {
+      "name": "Dramatic Side Lighting",
+      "description": "Strong light from left side, high contrast",
+      "lighting": {
+        "direction": { "value": 90 },
+        "intensity": { "value": 0.95 },
+        "colorTemperature": { "value": 5500 }
+      }
+    },
+    "warm_fill": {
+      "name": "Warm Fill Light",
+      "description": "Warm, soft lighting suitable for portraits",
+      "lighting": {
+        "direction": { "value": 45 },
+        "intensity": { "value": 0.7 },
+        "colorTemperature": { "value": 4000 }
+      }
+    },
+    "cool_professional": {
+      "name": "Cool Professional",
+      "description": "Cool-toned professional lighting",
+      "lighting": {
+        "direction": { "value": 45 },
+        "intensity": { "value": 0.75 },
+        "colorTemperature": { "value": 6500 }
+      }
+    },
+    "natural_daylight": {
+      "name": "Natural Daylight",
+      "description": "Neutral daylight simulation",
+      "lighting": {
+        "direction": { "value": 45 },
+        "intensity": { "value": 0.8 },
+        "colorTemperature": { "value": 5500 }
+      }
+    }
+  },
+  "notes": {
+    "direction": "0° = front center, 45° = front-left, 90° = left, 135° = back-left, etc.",
+    "intensity": "Higher values = stronger lighting effect. 0.5-0.8 recommended for natural look.",
+    "colorTemperature": "Warm (2700K) = golden/sunset, Neutral (5500K) = daylight, Cool (6500K) = bluish/professional"
+  }
+}

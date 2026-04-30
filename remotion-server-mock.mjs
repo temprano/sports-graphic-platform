@@ -10,8 +10,9 @@
  */
 
 import http from 'http';
-import { createWriteStream } from 'fs';
+import { spawn } from 'child_process';
 import { mkdir } from 'fs/promises';
+import { statSync } from 'fs';
 import path from 'path';
 
 const PORT = process.env.PORT || 3002;
@@ -36,45 +37,56 @@ async function parseJSON(req) {
 }
 
 /**
- * Generate mock MP4 file
- * Creates a minimal valid MP4 structure for testing
+ * Generate valid MP4 file using ffmpeg
+ * Creates a test video with solid background
  */
-async function generateMockMP4(outputPath) {
-  // Create minimal MP4 file (ftyp + mdat boxes)
-  const ftypBox = Buffer.from([
-    0x00, 0x00, 0x00, 0x20,  // Size: 32 bytes
-    0x66, 0x74, 0x79, 0x70,  // 'ftyp'
-    0x69, 0x73, 0x6f, 0x6d,  // 'isom'
-    0x00, 0x00, 0x02, 0x00,  // Minor version
-    0x69, 0x73, 0x6f, 0x6d,  // Compatible brands
-    0x69, 0x73, 0x6f, 0x32,  // 'iso2'
-    0x6d, 0x70, 0x34, 0x31,  // 'mp41'
-    0x69, 0x73, 0x6f, 0x6d,  // 'isom'
-  ]);
+async function generateValidMP4(outputPath, width, height, duration, fps = 30, playerName = '') {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Ensure output directory exists
+      await mkdir(path.dirname(outputPath), { recursive: true });
 
-  // Create mdat box with dummy data (50KB video data)
-  const mdatSize = 50 * 1024;
-  const mdatBoxHeader = Buffer.alloc(8);
-  mdatBoxHeader.writeUInt32BE(mdatSize + 8, 0);  // Total size including header
-  mdatBoxHeader.write('mdat', 4);                 // 'mdat'
+      // Use ffmpeg to generate a test video
+      const ffmpegArgs = [
+        '-f', 'lavfi',
+        '-i', `color=c=black:s=${width}x${height}:d=${duration}`,
+        '-r', fps.toString(),
+        '-c:v', 'libx264',
+        '-preset', 'ultrafast',
+        '-crf', '28',
+        '-y',
+        outputPath
+      ];
 
-  const mdatData = Buffer.alloc(mdatSize);
+      const ffmpeg = spawn('ffmpeg', ffmpegArgs, {
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
 
-  const output = Buffer.concat([ftypBox, mdatBoxHeader, mdatData]);
-  
-  // Ensure directory exists
-  const dir = path.dirname(outputPath);
-  await mkdir(dir, { recursive: true });
+      let stderr = '';
+      ffmpeg.stderr.on('data', data => {
+        stderr += data.toString();
+      });
 
-  // Write file
-  return new Promise((resolve, reject) => {
-    const stream = createWriteStream(outputPath);
-    stream.on('error', reject);
-    stream.on('finish', () => {
-      resolve(output.length);
-    });
-    stream.write(output);
-    stream.end();
+      ffmpeg.on('close', code => {
+        if (code === 0) {
+          try {
+            const stats = statSync(outputPath);
+            resolve(stats.size);
+          } catch (err) {
+            reject(new Error(`Failed to stat output file: ${err.message}`));
+          }
+        } else {
+          reject(new Error(`ffmpeg failed with code ${code}`));
+        }
+      });
+
+      ffmpeg.on('error', err => {
+        reject(new Error(`ffmpeg not found: Install from https://ffmpeg.org`));
+      });
+
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
@@ -143,27 +155,39 @@ const server = http.createServer(async (req, res) => {
       console.log(`   Output: ${outputPath}`);
 
       const startTime = Date.now();
+      const duration = durationInFrames / fps;
 
-      // Generate mock MP4
-      const fileSize = await generateMockMP4(outputPath);
+      try {
+        // Generate valid MP4 with ffmpeg
+        const fileSize = await generateValidMP4(outputPath, width, height, duration, fps);
 
-      const duration = (Date.now() - startTime) / 1000;
+        const renderTime = (Date.now() - startTime) / 1000;
 
-      console.log(`✅ ${compositionId} rendered in ${duration.toFixed(2)}s (${fileSize} bytes)\n`);
+        console.log(`✅ ${compositionId} rendered in ${renderTime.toFixed(2)}s (${(fileSize / 1024).toFixed(2)} KB)\n`);
 
-      res.writeHead(200);
-      res.end(JSON.stringify({
-        success: true,
-        compositionId,
-        outputPath,
-        width,
-        height,
-        fps,
-        durationInFrames,
-        duration: durationInFrames / fps,
-        fileSize,
-        renderTime: duration,
-      }));
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          compositionId,
+          outputPath,
+          width,
+          height,
+          fps,
+          durationInFrames,
+          duration,
+          fileSize,
+          renderTime,
+        }));
+      } catch (error) {
+        console.error(`❌ ffmpeg error: ${error.message}`);
+        console.error('   Install ffmpeg: https://ffmpeg.org/download.html\n');
+
+        res.writeHead(500);
+        res.end(JSON.stringify({
+          error: `Video generation failed: ${error.message}`,
+          hint: 'ffmpeg is required. Install from https://ffmpeg.org/download.html',
+        }));
+      }
     } catch (error) {
       console.error(`❌ Render error: ${error.message}`);
       res.writeHead(500);
@@ -183,7 +207,8 @@ server.listen(PORT, () => {
   console.log(`\n🎬 Mock Remotion Server listening on http://localhost:${PORT}`);
   console.log(`   GET  /health - Health check`);
   console.log(`   GET  /compositions - List available compositions`);
-  console.log(`   POST /render - Render a composition\n`);
+  console.log(`   POST /render - Render a composition (generates real MP4 with ffmpeg)\n`);
+  console.log('   ⚠️  Requires ffmpeg: https://ffmpeg.org/download.html\n');
 });
 
 // Graceful shutdown

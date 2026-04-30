@@ -2,18 +2,25 @@
  * src/pipeline/comfyui-client.js
  *
  * Client for the ComfyUI API.
- * Handles BiRefNet background removal and other AI image workflows.
+ * Handles BiRefNet background removal, IC-Light relighting, and other AI image workflows.
  *
  * Features:
- * - BiRefNet background removal (primary workflow)
+ * - BiRefNet background removal (cutout phase)
+ * - IC-Light relighting with configurable lighting params (lighting phase)
  * - Workflow polling with exponential backoff
  * - Automatic retry on transient failures
  * - 5-minute timeout with graceful error handling
  * - Output image download and validation
  *
+ * Workflow Pipeline:
+ * 1. Original photo → removeBackground() → Cutout PNG with transparency
+ * 2. Cutout PNG → applyICLight() → Relit PNG with brand lighting
+ * 3. Relit PNG → [compositions use for rendering]
+ *
  * Usage:
- *   import { removeBackground, isReachable } from './comfyui-client.js';
- *   const cutoutPath = await removeBackground(photoPath, outputPath);
+ *   import { removeBackground, applyICLight, isReachable } from './comfyui-client.js';
+ *   const cutoutPath = await removeBackground(photoPath, cutoutPath);
+ *   const relitPath = await applyICLight(cutoutPath, relitPath, { direction: 45, intensity: 0.8 });
  */
 
 import { config } from '../config.js';
@@ -237,6 +244,118 @@ export async function removeBackground(inputPath, outputPath) {
   } catch (error) {
     throw new Error(
       `Background removal failed: ${error.message}`
+    );
+  }
+}
+
+/**
+ * Generate IC-Light workflow JSON for ComfyUI.
+ * IC-Light applies realistic relighting to a cutout image.
+ *
+ * @param {string} inputFilename - filename in ComfyUI input folder (should be PNG with transparency)
+ * @param {object} lightingParams - lighting configuration
+ * @param {number} lightingParams.direction - light direction in degrees (0-360)
+ * @param {number} lightingParams.intensity - light intensity (0-1)
+ * @param {number} lightingParams.colorTemperature - light color temp in Kelvin (2700-6500)
+ * @returns {Object} ComfyUI prompt/workflow
+ */
+function createICLightWorkflow(inputFilename, lightingParams = {}) {
+  const {
+    direction = 45,
+    intensity = 0.8,
+    colorTemperature = 5500,
+  } = lightingParams;
+
+  return {
+    '1': {
+      inputs: {
+        image: inputFilename,
+      },
+      class_type: 'LoadImage',
+    },
+    '2': {
+      inputs: {
+        images: ['1', 0],
+        light_direction: direction,
+        light_intensity: intensity,
+        light_color_temperature: colorTemperature,
+        ambient_strength: 0.3,
+      },
+      class_type: 'IC-Light',
+    },
+    '3': {
+      inputs: {
+        images: ['2', 0],
+        format: 'png',
+      },
+      class_type: 'SaveImage',
+    },
+  };
+}
+
+/**
+ * Applies IC-Light relighting to a cutout image.
+ * Should be called after removeBackground to apply consistent lighting.
+ *
+ * @param {string} inputPath      - path to cutout PNG (with transparency)
+ * @param {string} outputPath     - path to write relit PNG
+ * @param {object} lightingConfig - lighting parameters (direction, intensity, colorTemperature)
+ * @returns {Promise<string>}     outputPath on success
+ */
+export async function applyICLight(inputPath, outputPath, lightingConfig = {}) {
+  if (!inputPath || typeof inputPath !== 'string' || inputPath.trim() === '') {
+    throw new Error('Invalid input path');
+  }
+  if (!outputPath || typeof outputPath !== 'string' || outputPath.trim() === '') {
+    throw new Error('Invalid output path');
+  }
+
+  const outputDir = dirname(outputPath);
+
+  try {
+    // ─── Create Workflow ────────────────────────────────────────────
+    const inputFilename = inputPath.split('/').pop();
+    const workflow = createICLightWorkflow(inputFilename, lightingConfig);
+
+    // ─── Submit to ComfyUI Queue ────────────────────────────────────
+    const queueRes = await fetchWithRetry(
+      `${config.comfyui.baseUrl}/prompt`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: workflow }),
+      }
+    );
+
+    const queueData = await queueRes.json();
+    if (!queueData.prompt_id) {
+      throw new Error('No prompt_id in queue response');
+    }
+
+    const promptId = queueData.prompt_id;
+
+    // ─── Poll for Completion ────────────────────────────────────────
+    const history = await pollCompletion(
+      promptId,
+      config.comfyui.timeout || DEFAULT_TIMEOUT
+    );
+
+    // ─── Get Output Filename ────────────────────────────────────────
+    const outputFilename = extractOutputFilename(history);
+
+    // ─── Download Output Image ──────────────────────────────────────
+    const viewUrl = `${config.comfyui.baseUrl}/view?filename=${encodeURIComponent(outputFilename)}`;
+    const imageRes = await fetchWithRetry(viewUrl);
+    const imageBuffer = await imageRes.arrayBuffer();
+
+    // ─── Write to Output Path ───────────────────────────────────────
+    mkdirSync(outputDir, { recursive: true });
+    writeFileSync(outputPath, Buffer.from(imageBuffer));
+
+    return outputPath;
+  } catch (error) {
+    throw new Error(
+      `IC-Light relighting failed: ${error.message}`
     );
   }
 }
