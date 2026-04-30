@@ -1,5 +1,4 @@
-@tailwind base;
-@tailwind components;
+@import "tailwindcss/preflight";
 @tailwind utilities;
 
 /* CSS Custom Properties for Brand Colors */
@@ -14,13 +13,13 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Base body styles */
-body {
-  @apply bg-white text-gray-900;
-}
-
-/* Typography */
+/* Typography and Component Layer */
 @layer components {
+  /* Base body styles */
+  body {
+    @apply bg-white text-gray-900;
+  }
+
   .heading-1 {
     @apply text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight;
   }
